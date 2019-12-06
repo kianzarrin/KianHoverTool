@@ -11,16 +11,14 @@ namespace Kian.HoverTool {
         public KianTool() : base() {
             var uiView = UIView.GetAView();
             button = (ToolButton)uiView.AddUIComponent(typeof(ToolButton));
+            button.eventClicked += (_, __) => {
+                Debug.Log("Button pressed");
+                ToggleTool();
+            };
 
             Debug.Log("Initializing traffic Kian Tool...");
             GameObject toolModControl = ToolsModifierControl.toolController.gameObject;
             var tool = toolModControl.GetComponent<KianTool>() ?? toolModControl.AddComponent<KianTool>();
-        }
-
-        public static bool Toggle() {
-            var tool = Singleton<KianTool>.instance;
-            tool.ToggleTool();
-            return tool.ToolEnabled;
         }
 
         public override void EnableTool() => ToolsModifierControl.SetTool<KianTool>();

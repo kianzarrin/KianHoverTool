@@ -9,10 +9,6 @@ namespace Kian.HoverTool
         public override void Start()
         {
             base.Start();
-
-
-            // Add a new button to the view.
-
             // Set the text to show on the
             text = "Click Me!";
             name = "ToolACtivateButton";
@@ -38,20 +34,6 @@ namespace Kian.HoverTool
 
             // Place the
             transformPosition = new Vector3(-1.65f, 0.97f);
-
-            // Respond to button click.
-            eventClick += ButtonClick;
-        }
-
-        private void ButtonClick(UIComponent component, UIMouseEventParameter eventParam)
-        {
-            UIButton button = component as UIButton;
-            Debug.Log("Button pressed");
-            bool enabled = KianTool.Toggle();
-            //if (enabled)
-            //    button.Focus();
-            //else
-            //    button.Unfocus();
         }
     }
 }
