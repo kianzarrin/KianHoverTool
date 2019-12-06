@@ -1,13 +1,16 @@
 using ICities;
 using ColossalFramework;
-using KianPatch;
 using UnityEngine;
 
-namespace KianHoverElements
+using Kian.HoverTool;
+using Kian.Patch;
+using System;
+
+namespace Kian.Mod
 {
     public class KianModInfo : IUserMod {
-        public string Name => "Kian hovering tool";
-        public string Description => "a basic tool with hover-click functionality";
+        public string Name => "Kian toggle color";
+        public string Description => "kian hovering tool that toggles a single segmetns color";
     }
 
     public class LoadingExtention : LoadingExtensionBase {
@@ -21,18 +24,20 @@ namespace KianHoverElements
             tool = null;
         }
         public override void OnCreated(ILoading loading) {
-            Debug.Log("OnCreated begins");
             base.OnCreated(loading);
-            Hook.UnhookAll();
-            Hook.HookGetSegmentColor();
-            Debug.Log("OnCreated ends");
+            try {
+                //Hook.HookAll();
+            }
+            catch (Exception e) {
+                Debug.Log("HookAll() threw exception");
+            }
 
         }
         public override void OnReleased() {
             Debug.Log("OnReleased begins");
-            Hook.UnhookAll();
+            Hook.UnHookAll();
             base.OnReleased();
-            Debug.Log("OnReleased ends");
+
 
         }
     }

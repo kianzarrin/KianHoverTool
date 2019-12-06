@@ -70,7 +70,7 @@
   <ItemGroup>
     <Compile Include="SkinManager.cs" />
     <Compile Include="RedirectionHelper.cs" />
-    <Compile Include="Patcher.cs" />
+    <Compile Include="Hook.cs" />
     <Compile Include="KianTool.cs" />
     <Compile Include="KianMod.cs" />
     <Compile Include="ToolButton.cs" />

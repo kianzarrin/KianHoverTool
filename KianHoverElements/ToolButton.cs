@@ -1,8 +1,8 @@
-﻿using ColossalFramework.UI;
+using ColossalFramework.UI;
 using UnityEngine;
 using ColossalFramework;
 
-namespace KianHoverElements
+namespace Kian.HoverTool
 {
     public class ToolButton : UIButton
     {
@@ -48,10 +48,10 @@ namespace KianHoverElements
             UIButton button = component as UIButton;
             Debug.Log("Button pressed");
             bool enabled = KianTool.Toggle();
-            if (enabled)
-                button.Focus();
-            else
-                button.Unfocus();
+            //if (enabled)
+            //    button.Focus();
+            //else
+            //    button.Unfocus();
         }
     }
 }

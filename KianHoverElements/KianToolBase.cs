@@ -1,9 +1,8 @@
-﻿using ColossalFramework.UI;
+using ColossalFramework.UI;
 using UnityEngine;
-using static KianHoverElements.ShortCuts;
+using static Kian.Mod.ShortCuts;
 
-namespace KianHoverElements
-{
+namespace Kian.HoverTool {
     public abstract class KianToolBase : DefaultTool
     {
         public bool ToolEnabled = false;

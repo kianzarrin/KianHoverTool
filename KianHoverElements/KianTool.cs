@@ -1,13 +1,16 @@
 using ColossalFramework;
 using ColossalFramework.UI;
+using System;
 using UnityEngine;
+using Kian.Patch;
 
-namespace KianHoverElements {
-    using static ShortCuts;
+namespace Kian.HoverTool {
+    using static Kian.Mod.ShortCuts;
     public sealed class KianTool : KianToolBase {
+        ToolButton button;
         public KianTool() : base() {
             var uiView = UIView.GetAView();
-            ToolButton button = (ToolButton)uiView.AddUIComponent(typeof(ToolButton));
+            button = (ToolButton)uiView.AddUIComponent(typeof(ToolButton));
 
             Debug.Log("Initializing traffic Kian Tool...");
             GameObject toolModControl = ToolsModifierControl.toolController.gameObject;
@@ -21,6 +24,17 @@ namespace KianHoverElements {
         }
 
         public override void EnableTool() => ToolsModifierControl.SetTool<KianTool>();
+
+        protected override void OnEnable() {
+            Debug.Log("OnEnable");
+            base.OnEnable();
+            button.Focus();
+        }
+        protected override void OnDisable() {
+            Debug.Log("OnDisable");
+            base.OnDisable();
+            button.Unfocus();
+        }
 
         public override void RenderOverlay(RenderManager.CameraInfo cameraInfo) {
             base.RenderOverlay(cameraInfo);
@@ -36,9 +50,23 @@ namespace KianHoverElements {
 
         protected override void OnPrimaryMouseClicked() {
             Debug.Log($"OnPrimaryMouseClicked: segment {HoveredSegmentId} node {HoveredNodeId}");
+            if(HoveredSegmentId == 0) {
+                return;
+            }
+            Hook.HookAll();
+
+
             SkinManager.Toggle(HoveredSegmentId);
+
+            //var seg = Segment(HoveredSegmentId);
+            //Type t = seg.Info.m_netAI.GetType();
+            //Debug.Log($"netAI type is {t}");
+            //Color color = seg.Info.m_netAI.GetColor(HoveredSegmentId, ref seg, InfoManager.InfoMode.None);
+            //Debug.Log($"get color returned {color}");
+
             //Refersh();
             RefreshSegment(HoveredSegmentId);
+
         }
 
         protected override void OnSecondaryMouseClicked() {
