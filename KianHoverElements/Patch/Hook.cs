@@ -1,130 +1,67 @@
+using System;
 using UnityEngine;
 using System.Reflection;
 using System.Collections.Generic;
+//using ColossalFramework;
 
-namespace Kian.Patch
-{
-    public static class LogOnce {
-        private static List<string> listLogs = new List<string>();
-        public static void Log(string m) {
-            var st = new System.Diagnostics.StackTrace();
-            var sf = st.GetFrame(2);
-            string key = sf.GetMethod().Name + ": " + m;
-            if(!listLogs.Contains(key))
-                Debug.Log(key);
-        }
-    }
+namespace Kian.Patch {
+    public static class Hook {
+        public static List<HookBase> hooks = new List<HookBase>();
 
-    public static class Hook
-    {
         public static void HookAll() {
-            GetSegmentColor.Hook();
+            hooks.Add(new GetSegmentColor());
+            hooks.Add(new GetNodeColor());
+            hooks.Add(new RenderInstance());
             Debug.Log("hooked everything");
         }
         public static void UnHookAll() {
-            GetSegmentColor.UnHook();
+            foreach (var h in hooks) {
+                h.UnHook();
+            }
             Debug.Log("unhooked everything");
         }
 
-        public class GetSegmentColor {
-            private static MethodInfo From = null;
-            private static RedirectCallsState State = null;
-            public static void Hook() {
-                UnHook();
-                MethodInfo from = typeof(RoadAI).GetMethod("GetColor", new[] { typeof(ushort), typeof(global::NetSegment).MakeByRefType(), typeof(InfoManager.InfoMode) });
-                MethodInfo to = typeof(ColorDetours).GetMethod("GetSegmentColor");
-                LogOnce.Log($"Hooking {from}  to {to}");
-                if (from == null || to == null) {
-                    Debug.LogError("hooking failed.");
-                    return;
-                }
-                State = RedirectionHelper.RedirectCalls(from, to);
-                From = from;
-            }
-            public static void UnHook() {
-                if (From != null) {
-                    LogOnce.Log($"UnHooking {From}");
-                    RedirectionHelper.RevertRedirect(From, State);
-                    From = null;
-                    State = null;
-                }
-            }
+        public class GetSegmentColor : HookBase {
+            private Type[] args => new[] { typeof(ushort), typeof(NetSegment).MakeByRefType(), typeof(InfoManager.InfoMode) };
+            public override MethodInfo From => typeof(RoadAI).GetMethod("GetColor", args);
+            public override MethodInfo To => typeof(ColorDetours).GetMethod("GetSegmentColor");
         }
 
-        public class GetNodeColor {
-            private static MethodInfo From = null;
-            private static RedirectCallsState State = null;
-            public static void Hook() {
-                UnHook();
-                MethodInfo from = typeof(RoadAI).GetMethod("GetColor", new[] { typeof(ushort), typeof(global::NetNode).MakeByRefType(), typeof(InfoManager.InfoMode) });
-                MethodInfo to = typeof(ColorDetours).GetMethod("GetNodeColor");
-                LogOnce.Log($"Hooking {from}  to {to}");
-                if (from == null || to == null) {
-                    Debug.LogError("hooking failed.");
-                    return;
-                }
-                State = RedirectionHelper.RedirectCalls(from, to);
-                From = from;
-            }
-            public static void UnHook() {
-                if (From != null) {
-                    LogOnce.Log($"UnHooking {From}");
-                    RedirectionHelper.RevertRedirect(From, State);
-                    From = null;
-                    State = null;
-                }
-            }
-        }
-    }
-
-    public static class ColorDetours
-    {
-        public static Color? [] SegmentSkins => Kian.HoverTool.SkinManager.SegmentSkins;
-        public static Color?[] NodeSkins => Kian.HoverTool.SkinManager.NodeSkins;
-
-        public static Color GetSegmentColor(NetAI netAI, ushort segmentID, ref global::NetSegment data, InfoManager.InfoMode infoMode)
-        {
-            Hook.GetSegmentColor.UnHook();
-            var patcherState = Apply(netAI.m_info, SegmentSkins[segmentID]);
-            var segmentColor = netAI.GetColor(segmentID, ref data, infoMode);
-            Revert(netAI.m_info, patcherState);
-            Hook.GetSegmentColor.Hook();
-            if(SegmentSkins[segmentID]!= null) Debug.Log($"Detour returns segmentColor={segmentColor} for segmentID={segmentID}");
-            return segmentColor;
+        public class GetNodeColor : HookBase {
+            private Type[] args => new[] { typeof(ushort), typeof(NetNode).MakeByRefType(), typeof(InfoManager.InfoMode) };
+            public override MethodInfo From => typeof(RoadAI).GetMethod("GetColor", args);
+            public override MethodInfo To => typeof(ColorDetours).GetMethod("GetNodeColor");
         }
 
-        public static Color GetNodeColor(NetAI netAI, ushort nodeID, ref global::NetNode data, InfoManager.InfoMode infoMode) {
-            Hook.GetNodeColor.UnHook();
-            var patcherState = Apply(netAI.m_info, NodeSkins[nodeID]);
-            var nodeColor = netAI.GetColor(nodeID, ref data, infoMode);
-            Revert(netAI.m_info, patcherState);
-            Hook.GetNodeColor.Hook();
-            if (NodeSkins[nodeID] != null) Debug.Log($"Detour returns nodeColor={nodeColor} for nodeID={nodeID}");
-            return nodeColor;
+        /*private void NetSegment.RenderInstance(
+         * RenderManager.CameraInfo cameraInfo,
+         * ushort segmentID,
+         * int layerMask,
+         * NetInfo info,
+         * ref RenderManager.Instance data) */
+        public class RenderInstance : HookBase {
+            private Type[] args => new[] {
+                typeof(RenderManager.CameraInfo),
+                typeof(ushort),
+                typeof(int),
+                typeof(NetInfo),
+                typeof(RenderManager.Instance).MakeByRefType()
+            };
+            public override MethodInfo From => typeof(NetSegment).GetMethod("RenderInstance", args);
+            public override MethodInfo To => typeof(ColorDetours).GetMethod("RenderInstance");
         }
 
-        public static Color? Apply(NetInfo info, Color? skinColor)
-        {
-            if (info == null || skinColor == null || info.m_color == skinColor)
-            {
-                return null;
-            }
+        // // private static void NetTool.RenderSegment(NetInfo info, NetSegment.Flags flags, Vector3 startPosition, Vector3 endPosition, Vector3 startDirection, Vector3 endDirection, bool smoothStart, bool smoothEnd)
+        //public class RenderSegment : HookBase {
+        //    public override MethodInfo From => typeof(NetTool).GetMethod("RenderSegment");
+        //    public override MethodInfo To => typeof(ColorDetours).GetMethod("RenderSegment");
+        //}
 
-            var state = info.m_color;
+        // //private static void NetTool.RenderNode(NetInfo info, Vector3 position, Vector3 direction)
+        //public class RenderNode : HookBase {
+        //    public override MethodInfo From => typeof(NetTool).GetMethod("RenderNode");
+        //    public override MethodInfo To => typeof(ColorDetours).GetMethod("RenderNode");
+        //}
 
-            info.m_color = (Color)skinColor;
-
-            return state;
-        }
-
-        public static void Revert(NetInfo info, Color? state)
-        {
-            if (info == null || state == null)
-            {
-                return;
-            }
-
-            info.m_color = state.Value;
-        }
-    }
+    } // end class Hook
 }

@@ -68,6 +68,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Patch\Detours.cs" />
+    <Compile Include="Patch\HookBase.cs" />
     <Compile Include="SkinManager.cs" />
     <Compile Include="Patch\RedirectionHelper.cs" />
     <Compile Include="Patch\Hook.cs" />
