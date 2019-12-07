@@ -53,7 +53,7 @@ namespace Kian.Patch {
         public class RenderInstance : HookBase {
             private BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
             public override MethodInfo From => typeof(NetSegment).GetMethod("RenderInstance", flags);
-            public override MethodInfo To => typeof(NetSegmentDetour).GetMethod("RenderInstance");
+            public override MethodInfo To => typeof(Detours).GetMethod("RenderInstance");
         }
 
         // // private static void NetTool.RenderSegment(NetInfo info, NetSegment.Flags flags, Vector3 startPosition, Vector3 endPosition, Vector3 startDirection, Vector3 endDirection, bool smoothStart, bool smoothEnd)
