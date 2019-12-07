@@ -63,15 +63,18 @@ namespace Kian.HoverTool {
             //Color color = seg.Info.m_netAI.GetColor(HoveredSegmentId, ref seg, InfoManager.InfoMode.None);
             //Debug.Log($"get color returned {color}");
 
-            //Refersh();
-            Singleton<NetManager>.instance.UpdateSegmentColors(HoveredSegmentId);
-            netMan.UpdateSegment(HoveredSegmentId);
-            Segment(HoveredSegmentId).UpdateSegment(HoveredSegmentId);
-
+            Refersh();
+            Refersh(HoveredSegmentId);
         }
 
         protected override void OnSecondaryMouseClicked() {
             throw new System.NotImplementedException();
+        }
+
+        public void Refersh(ushort segmentID) {
+            Singleton<NetManager>.instance.UpdateSegmentColors(segmentID);
+            netMan.UpdateSegment(segmentID);
+            Segment(segmentID).UpdateSegment(segmentID);
         }
 
         public void Refersh() {

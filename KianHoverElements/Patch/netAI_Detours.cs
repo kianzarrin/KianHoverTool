@@ -7,7 +7,7 @@ using static Kian.Skins.SkinManager.Util;
 
 namespace Kian.Patch {
     public class RoadBaseAIDetours {
-        public Color GetColor1(ushort segmentID, ref NetSegment data, InfoManager.InfoMode infoMode) {
+        public Color GetColor(ushort segmentID, ref NetSegment data, InfoManager.InfoMode infoMode) {
             RoadBaseAI thisAI = data.Info.m_netAI as RoadBaseAI;
 
             switch (infoMode) {
@@ -110,7 +110,7 @@ namespace Kian.Patch {
             return Color.Lerp(Singleton<CoverageManager>.instance.m_properties.m_goodCoverage, Singleton<CoverageManager>.instance.m_properties.m_badCoverage, Mathf.Clamp01((float)(coverage5 + coverage6) * 0.001968504f));
         }
 
-        public Color GetColor2(ushort nodeID, ref NetNode data, InfoManager.InfoMode infoMode) {
+        public Color GetColor(ushort nodeID, ref NetNode data, InfoManager.InfoMode infoMode) {
             RoadBaseAI thisAI = data.Info.m_netAI as RoadBaseAI;
 
             switch (infoMode) {

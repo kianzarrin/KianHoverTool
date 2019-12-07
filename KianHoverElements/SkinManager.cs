@@ -31,8 +31,6 @@ namespace Kian.Skins
                 Color ret = SegmentSkins?[id] ?? color;
                 if (SegmentSkins?[id] != null) {
                     Debug.Log(Environment.StackTrace + $"new color id={id} ret={ret}");
-                } else {
-                    Debug.Log(Environment.StackTrace + $"default color id={id} ret={ret}");
                 }
                 return ret;
             }
@@ -40,8 +38,6 @@ namespace Kian.Skins
                 Color ret = NodeSkins?[id] ?? color;
                 if (NodeSkins?[id] != null) {
                     Debug.Log(Environment.StackTrace + $"new color id={id} ret={ret}");
-                } else {
-                    Debug.Log(Environment.StackTrace + $"default color id={id} ret={ret}");
                 }
                 return ret;
             }

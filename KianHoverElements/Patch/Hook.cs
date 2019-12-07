@@ -40,13 +40,13 @@ namespace Kian.Patch {
         public class GetSegmentColor : HookBase {
             private Type[] args => new[] { typeof(ushort), typeof(NetSegment).MakeByRefType(), typeof(InfoManager.InfoMode) };
             public override MethodInfo From => typeof(RoadAI).GetMethod("GetColor", args);
-            public override MethodInfo To => typeof(RoadBaseAIDetours).GetMethod("GetColor1");
+            public override MethodInfo To => typeof(RoadBaseAIDetours).GetMethod("GetColor",args);
         }
 
         public class GetNodeColor : HookBase {
             private Type[] args => new[] { typeof(ushort), typeof(NetNode).MakeByRefType(), typeof(InfoManager.InfoMode) };
             public override MethodInfo From => typeof(RoadAI).GetMethod("GetColor", args);
-            public override MethodInfo To => typeof(RoadBaseAIDetours).GetMethod("GetColor2");
+            public override MethodInfo To => typeof(RoadBaseAIDetours).GetMethod("GetColor",args);
         }
 
         //public void NetSegment.RenderInstance(RenderManager.CameraInfo cameraInfo, ushort segmentID, int layerMask)
