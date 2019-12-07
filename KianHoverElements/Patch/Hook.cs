@@ -10,8 +10,8 @@ namespace Kian.Patch {
         public static List<HookBase> hooks = new List<HookBase>();
 
         public Hook() {
-            //hooks.Add(new GetSegmentColor());
-            //hooks.Add(new GetNodeColor());
+            hooks.Add(new GetSegmentColor());
+            hooks.Add(new GetNodeColor());
             hooks.Add(new RenderInstance());
         }
 
@@ -40,20 +40,20 @@ namespace Kian.Patch {
         public class GetSegmentColor : HookBase {
             private Type[] args => new[] { typeof(ushort), typeof(NetSegment).MakeByRefType(), typeof(InfoManager.InfoMode) };
             public override MethodInfo From => typeof(RoadAI).GetMethod("GetColor", args);
-            public override MethodInfo To => typeof(Detours).GetMethod("GetSegmentColor");
+            public override MethodInfo To => typeof(RoadBaseAIDetours).GetMethod("GetColor1");
         }
 
         public class GetNodeColor : HookBase {
             private Type[] args => new[] { typeof(ushort), typeof(NetNode).MakeByRefType(), typeof(InfoManager.InfoMode) };
             public override MethodInfo From => typeof(RoadAI).GetMethod("GetColor", args);
-            public override MethodInfo To => typeof(Detours).GetMethod("GetNodeColor");
+            public override MethodInfo To => typeof(RoadBaseAIDetours).GetMethod("GetColor2");
         }
 
         //public void NetSegment.RenderInstance(RenderManager.CameraInfo cameraInfo, ushort segmentID, int layerMask)
         public class RenderInstance : HookBase {
             private BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
             public override MethodInfo From => typeof(NetSegment).GetMethod("RenderInstance", flags);
-            public override MethodInfo To => typeof(Detours).GetMethod("RenderInstance");
+            public override MethodInfo To => typeof(NetSegmentDetours).GetMethod("RenderInstance");
         }
 
         // // private static void NetTool.RenderSegment(NetInfo info, NetSegment.Flags flags, Vector3 startPosition, Vector3 endPosition, Vector3 startDirection, Vector3 endDirection, bool smoothStart, bool smoothEnd)

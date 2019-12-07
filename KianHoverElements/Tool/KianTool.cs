@@ -2,7 +2,7 @@ using ColossalFramework;
 using ColossalFramework.UI;
 using System;
 using UnityEngine;
-using Kian.Patch;
+using Kian.Skins;
 
 namespace Kian.HoverTool {
     using static Kian.Mod.ShortCuts;
@@ -63,8 +63,8 @@ namespace Kian.HoverTool {
             //Color color = seg.Info.m_netAI.GetColor(HoveredSegmentId, ref seg, InfoManager.InfoMode.None);
             //Debug.Log($"get color returned {color}");
 
-            Refersh();
-            RefreshSegment(HoveredSegmentId);
+            //Refersh();
+            Singleton<NetManager>.instance.UpdateSegmentColors(HoveredSegmentId);
             netMan.UpdateSegment(HoveredSegmentId);
             Segment(HoveredSegmentId).UpdateSegment(HoveredSegmentId);
 
@@ -74,7 +74,6 @@ namespace Kian.HoverTool {
             throw new System.NotImplementedException();
         }
 
-        public void RefreshSegment(ushort ID) => Singleton<NetManager>.instance.UpdateSegmentColors(ID);
         public void Refersh() {
             Singleton<NetManager>.instance.UpdateSegmentColors();
             Singleton<NetManager>.instance.UpdateNodeColors();

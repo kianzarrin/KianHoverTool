@@ -36,7 +36,15 @@ namespace Kian.Skins
                 }
                 return ret;
             }
-            public static Color NodeColor(ushort id, Color color) => NodeSkins?[id] ?? color;
+            public static Color NodeColor(ushort id, Color color){
+                Color ret = NodeSkins?[id] ?? color;
+                if (NodeSkins?[id] != null) {
+                    Debug.Log(Environment.StackTrace + $"new color id={id} ret={ret}");
+                } else {
+                    Debug.Log(Environment.StackTrace + $"default color id={id} ret={ret}");
+                }
+                return ret;
+            }
         }
 
     } // end class

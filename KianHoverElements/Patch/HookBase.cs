@@ -29,11 +29,10 @@ namespace Kian.Patch {
                 MethodInfo from = From;
                 Debug.Log($"UnHooking {STR(from)} ...");
                 RedirectionHelper.RevertRedirect(from, State);
-                //Debug.Log($"UnHooking {from} completed");
                 State = null;
             }
         }
 
-        public string STR(MethodInfo info) => $"{info.DeclaringType.FullName} :: {info}";
+        public string STR(MethodInfo info)=> info == null? "null": $"{info?.DeclaringType?.FullName} :: {info}";
     }
 }

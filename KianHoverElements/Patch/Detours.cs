@@ -3,23 +3,61 @@ using ColossalFramework;
 using ColossalFramework.UI;
 using static Kian.Mod.ShortCuts;
 using static Kian.Skins.SkinManager.Util;
+using static Kian.Skins.SkinManager;
 using System;
 
+
 namespace Kian.Patch {
-    public class Detours {
-
-
+    public class Patches {
         public Color GetSegmentColor(ushort segmentID, ref global::NetSegment data, InfoManager.InfoMode infoMode) {
             RoadBaseAI netAI = Segment(segmentID).Info.m_netAI as RoadBaseAI; //this
+            Singleton<Hook.GetSegmentColor>.instance.UnHook();
 
+            var patcherState = Apply(netAI.m_info, SegmentSkins[segmentID]);
+            var segmentColor = netAI.GetColor(segmentID, ref data, infoMode);
+            Revert(netAI.m_info, patcherState);
+
+            Singleton<Hook.GetSegmentColor>.instance.Hook();
+            if (SegmentSkins[segmentID] != null) Debug.Log($"Detour returns segmentColor={segmentColor} for segmentID={segmentID}");
+            return segmentColor;
 
         }
 
         public Color GetNodeColor(ushort nodeID, ref global::NetNode data, InfoManager.InfoMode infoMode) {
             RoadBaseAI netAI = Node(nodeID).Info.m_netAI as RoadBaseAI;//this
+            Singleton<Hook.GetNodeColor>.instance.UnHook();
 
+            var patcherState = Apply(netAI.m_info, NodeSkins[nodeID]);
+            var nodeColor = netAI.GetColor(nodeID, ref data, infoMode);
+            Revert(netAI.m_info, patcherState);
+
+            Singleton<Hook.GetNodeColor>.instance.Hook();
+            if (NodeSkins[nodeID] != null) Debug.Log($"Detour returns nodeColor={nodeColor} for nodeID={nodeID}");
+            return nodeColor;
         }
 
+        public static Color? Apply(NetInfo info, Color? skinColor) {
+            if (info == null || skinColor == null || info.m_color == skinColor) {
+                return null;
+            }
+
+            var state = info.m_color;
+
+            info.m_color = (Color)skinColor;
+
+            return state;
+        }
+
+        public static void Revert(NetInfo info, Color? state) {
+            if (info == null || state == null) {
+                return;
+            }
+
+            info.m_color = state.Value;
+        }
+    }
+
+    public class NetSegmentDetours {
         /*private void NetSegment.RenderInstance(
          * RenderManager.CameraInfo cameraInfo,
          * ushort segmentID,
