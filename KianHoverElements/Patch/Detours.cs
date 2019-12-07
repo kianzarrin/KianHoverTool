@@ -1,30 +1,34 @@
 using UnityEngine;
+using ColossalFramework;
+using static Kian.Mod.ShortCuts;
 
 namespace Kian.Patch {
-    public static class ColorDetours {
+    public class Detours {
         public static Color?[] SegmentSkins => Kian.HoverTool.SkinManager.SegmentSkins;
         public static Color?[] NodeSkins => Kian.HoverTool.SkinManager.NodeSkins;
 
-        public static Color GetSegmentColor(NetAI netAI, ushort segmentID, ref global::NetSegment data, InfoManager.InfoMode infoMode) {
-            Hook.GetSegmentColor.instance.UnHook();
+        public Color GetSegmentColor(ushort segmentID, ref global::NetSegment data, InfoManager.InfoMode infoMode) {
+            NetAI netAI = Segment(segmentID).Info.m_netAI; //this
+            Singleton<Hook.GetSegmentColor>.instance.UnHook();
 
             var patcherState = Apply(netAI.m_info, SegmentSkins[segmentID]);
             var segmentColor = netAI.GetColor(segmentID, ref data, infoMode);
             Revert(netAI.m_info, patcherState);
 
-            Hook.GetSegmentColor.instance.Hook();
+            Singleton<Hook.GetSegmentColor>.instance.Hook();
             if (SegmentSkins[segmentID] != null) Debug.Log($"Detour returns segmentColor={segmentColor} for segmentID={segmentID}");
             return segmentColor;
         }
 
-        public static Color GetNodeColor(NetAI netAI, ushort nodeID, ref global::NetNode data, InfoManager.InfoMode infoMode) {
-            Hook.GetNodeColor.instance.UnHook();
+        public Color GetNodeColor(ushort nodeID, ref global::NetNode data, InfoManager.InfoMode infoMode) {
+            NetAI netAI = Node(nodeID).Info.m_netAI;//this
+            Singleton<Hook.GetNodeColor>.instance.UnHook();
 
             var patcherState = Apply(netAI.m_info, NodeSkins[nodeID]);
             var nodeColor = netAI.GetColor(nodeID, ref data, infoMode);
             Revert(netAI.m_info, patcherState);
 
-            Hook.GetNodeColor.instance.Hook();
+            Singleton<Hook.GetNodeColor>.instance.Hook();
             if (NodeSkins[nodeID] != null) Debug.Log($"Detour returns nodeColor={nodeColor} for nodeID={nodeID}");
             return nodeColor;
         }
@@ -36,20 +40,20 @@ namespace Kian.Patch {
          * NetInfo info,
          * ref RenderManager.Instance data) */
         public static void RenderInstance(
-            NetSegment segment,
             RenderManager.CameraInfo cameraInfo,
             ushort segmentID,
             int layerMask,
             NetInfo info,
             ref RenderManager.Instance data)
         {
-            Hook.RenderInstance.instance.UnHook();
+            NetSegment segment = Segment(segmentID);//this
+            Singleton<Hook.RenderInstance>.instance.UnHook();
 
             var patcherState = Apply(info, NodeSkins[segmentID]);
-            Hook.RenderInstance.instance.From.Invoke(segment, new object[] { cameraInfo, segmentID, layerMask, info, data });
+            Singleton<Hook.RenderInstance>.instance.From.Invoke(segment, new object[] { cameraInfo, segmentID, layerMask, info, data });
             Revert(info, patcherState);
 
-            Hook.GetNodeColor.instance.Hook();
+            Singleton<Hook.GetNodeColor>.instance.Hook();
             if (SegmentSkins[segmentID] != null) Debug.Log($"Detour uses SegmentSkins[segmentID]={SegmentSkins[segmentID]} for segmentID={segmentID}");
         }
 

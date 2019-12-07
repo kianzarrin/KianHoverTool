@@ -16,20 +16,19 @@ namespace Kian.HoverTool {
                 ToggleTool();
             };
 
-            Debug.Log("Initializing traffic Kian Tool...");
-            GameObject toolModControl = ToolsModifierControl.toolController.gameObject;
-            var tool = toolModControl.GetComponent<KianTool>() ?? toolModControl.AddComponent<KianTool>();
+            Debug.Log(" instanciating Kian Tool...");
         }
+
 
         public override void EnableTool() => ToolsModifierControl.SetTool<KianTool>();
 
         protected override void OnEnable() {
-            Debug.Log("OnEnable");
+            Debug.Log("OnEnable Kian Tool");
             base.OnEnable();
             button.Focus();
         }
         protected override void OnDisable() {
-            Debug.Log("OnDisable");
+            Debug.Log("OnDisable Kian Tool");
             base.OnDisable();
             button.Unfocus();
         }
@@ -46,13 +45,15 @@ namespace Kian.HoverTool {
                 color);
         }
 
+        bool hooked = false;
         protected override void OnPrimaryMouseClicked() {
             Debug.Log($"OnPrimaryMouseClicked: segment {HoveredSegmentId} node {HoveredNodeId}");
             if(HoveredSegmentId == 0) {
                 return;
             }
-            Hook.HookAll();
-
+            //if(!hooked) {
+            //    Hook.HookAll();
+            //}
 
             SkinManager.Toggle(HoveredSegmentId);
 

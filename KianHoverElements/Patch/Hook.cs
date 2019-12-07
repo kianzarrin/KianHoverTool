@@ -5,13 +5,29 @@ using System.Collections.Generic;
 //using ColossalFramework;
 
 namespace Kian.Patch {
-    public static class Hook {
+    public class Hook {
+        public static Hook instance;
         public static List<HookBase> hooks = new List<HookBase>();
 
-        public static void HookAll() {
-            hooks.Add(new GetSegmentColor());
-            hooks.Add(new GetNodeColor());
+        public Hook() {
+            //hooks.Add(new GetSegmentColor());
+            //hooks.Add(new GetNodeColor());
             hooks.Add(new RenderInstance());
+        }
+
+        public static void Create() => instance = new Hook();
+
+        public static void Release() {
+            UnHookAll();
+            hooks.Clear();
+            instance = null;
+        }
+
+        public static void HookAll() {
+            UnHookAll();
+            foreach (var h in hooks) {
+                h.Hook();
+            }
             Debug.Log("hooked everything");
         }
         public static void UnHookAll() {
@@ -24,31 +40,20 @@ namespace Kian.Patch {
         public class GetSegmentColor : HookBase {
             private Type[] args => new[] { typeof(ushort), typeof(NetSegment).MakeByRefType(), typeof(InfoManager.InfoMode) };
             public override MethodInfo From => typeof(RoadAI).GetMethod("GetColor", args);
-            public override MethodInfo To => typeof(ColorDetours).GetMethod("GetSegmentColor");
+            public override MethodInfo To => typeof(Detours).GetMethod("GetSegmentColor");
         }
 
         public class GetNodeColor : HookBase {
             private Type[] args => new[] { typeof(ushort), typeof(NetNode).MakeByRefType(), typeof(InfoManager.InfoMode) };
             public override MethodInfo From => typeof(RoadAI).GetMethod("GetColor", args);
-            public override MethodInfo To => typeof(ColorDetours).GetMethod("GetNodeColor");
+            public override MethodInfo To => typeof(Detours).GetMethod("GetNodeColor");
         }
 
-        /*private void NetSegment.RenderInstance(
-         * RenderManager.CameraInfo cameraInfo,
-         * ushort segmentID,
-         * int layerMask,
-         * NetInfo info,
-         * ref RenderManager.Instance data) */
+        //public void NetSegment.RenderInstance(RenderManager.CameraInfo cameraInfo, ushort segmentID, int layerMask)
         public class RenderInstance : HookBase {
-            private Type[] args => new[] {
-                typeof(RenderManager.CameraInfo),
-                typeof(ushort),
-                typeof(int),
-                typeof(NetInfo),
-                typeof(RenderManager.Instance).MakeByRefType()
-            };
-            public override MethodInfo From => typeof(NetSegment).GetMethod("RenderInstance", args);
-            public override MethodInfo To => typeof(ColorDetours).GetMethod("RenderInstance");
+            private BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
+            public override MethodInfo From => typeof(NetSegment).GetMethod("RenderInstance", flags);
+            public override MethodInfo To => typeof(NetSegmentDetour).GetMethod("RenderInstance");
         }
 
         // // private static void NetTool.RenderSegment(NetInfo info, NetSegment.Flags flags, Vector3 startPosition, Vector3 endPosition, Vector3 startDirection, Vector3 endDirection, bool smoothStart, bool smoothEnd)
