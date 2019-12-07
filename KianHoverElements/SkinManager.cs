@@ -1,7 +1,8 @@
+using System;
 using UnityEngine;
 using static Kian.Mod.ShortCuts;
 
-namespace Kian.HoverTool
+namespace Kian.Skins
 {
     public static class SkinManager {
         public static Color?[] SegmentSkins = new Color?[NetManager.MAX_SEGMENT_COUNT];
@@ -22,6 +23,21 @@ namespace Kian.HoverTool
             NodeSkins[seg.m_startNode] = skin;
             NodeSkins[seg.m_endNode] = skin;
             Debug.Log($"skin color toggled. new color = {SegmentSkins[segmentID]}");
+
         }
-   } // end class
+
+        public static class Util {
+            public static Color SegColor(ushort id, Color color) {
+                Color ret = SegmentSkins?[id] ?? color;
+                if (SegmentSkins?[id] != null) {
+                    Debug.Log(Environment.StackTrace + $"new color id={id} ret={ret}");
+                } else {
+                    Debug.Log(Environment.StackTrace + $"default color id={id} ret={ret}");
+                }
+                return ret;
+            }
+            public static Color NodeColor(ushort id, Color color) => NodeSkins?[id] ?? color;
+        }
+
+    } // end class
 }

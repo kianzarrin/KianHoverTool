@@ -63,8 +63,10 @@ namespace Kian.HoverTool {
             //Color color = seg.Info.m_netAI.GetColor(HoveredSegmentId, ref seg, InfoManager.InfoMode.None);
             //Debug.Log($"get color returned {color}");
 
-            //Refersh();
+            Refersh();
             RefreshSegment(HoveredSegmentId);
+            netMan.UpdateSegment(HoveredSegmentId);
+            Segment(HoveredSegmentId).UpdateSegment(HoveredSegmentId);
 
         }
 
