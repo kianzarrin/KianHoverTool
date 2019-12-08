@@ -1,39 +1,51 @@
 using System;
 using System.Collections;
 using UnityEngine;
-using static Kian.Mod.ShortCuts;
+using static Kian.Utils.ShortCuts;
 
 namespace Kian.Skins
 {
     public static class SkinManager {
-        public static Hashtable Crosswalks = new Hashtable();
+        public static bool?[] Crosswalks = new bool?[NetManager.MAX_SEGMENT_COUNT*2];
 
-        private static string GetKey(ushort segmentID, ushort nodeID) => $"{segmentID}:{nodeID}";
         public static void Toggle(ushort segmentID, ushort nodeID) {
-            if(segmentID == 0 || nodeID == 0) {
+            if (segmentID == 0 || nodeID == 0) {
                 return;
             }
-            var key = GetKey(segmentID, nodeID);
-            if (Crosswalks.Contains(key) && (bool)Crosswalks[key]) {
-                Crosswalks[key] = false;
-            } else {
-                Crosswalks[key] = true;
-            }
-            Debug.Log($"crosswalks color toggled. new value = {key} : {Crosswalks[key]}");
+            bool bStart = Segment(segmentID).m_startNode == nodeID;
+            Toggle(segmentID, bStart);
         }
 
-        public static bool ShowCrosswalks0(ushort segmentID, ushort nodeID, bool original=true) {
-            var key = GetKey(segmentID, nodeID);
-            bool ret = original;
-            ret = Crosswalks.Contains(key);
-            ret &= (bool)Crosswalks[key];
+        private static int GetIndex(ushort segmentID, bool bStart) {
+            int ret = segmentID * 2;
+            if (!bStart) {
+                ret++;
+            }
             return ret;
         }
+
+        public static void Toggle(ushort segmentID, bool bStart) {
+            if (segmentID == 0) {
+                return;
+            }
+
+            int idx = GetIndex(segmentID, bStart);
+            if (Crosswalks[idx] ?? false) {
+                Crosswalks[idx] = false;
+            } else {
+                Crosswalks[idx] = true;
+            }
+
+            Debug.Log($"crosswalks color toggled. {segmentID} + {bStart} = {idx}. new value =  {Crosswalks[idx]}");
+        }
+
         public static bool ShowCrosswalks(ushort segmentID, ushort nodeID) {
-            var key = GetKey(segmentID, nodeID);
-            bool ret = IsJunction(nodeID);
-            ret &= Crosswalks.Contains(key);
-            ret &= (bool)Crosswalks[key];
+            bool bStart = Segment(segmentID).m_startNode == nodeID;
+            return ShowCrosswalks(segmentID, bStart);
+        }
+        public static bool ShowCrosswalks(ushort segmentID, bool bStart) {
+            int idx = GetIndex(segmentID, bStart);
+            bool ret = Crosswalks[idx] ?? false;
             return ret;
         }
 

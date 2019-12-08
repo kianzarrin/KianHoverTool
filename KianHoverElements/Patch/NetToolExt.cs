@@ -1,11 +1,8 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
+
 using ColossalFramework;
-using ColossalFramework.Math;
 using UnityEngine;
-using static Kian.Mod.ShortCuts;
+using static Kian.Utils.ShortCuts;
 using static Kian.Skins.SkinManager;
 
 

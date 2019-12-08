@@ -42,26 +42,4 @@ namespace Kian.Mod
             base.OnReleased();
         }
     }
-    public static class ShortCuts {
-        internal static ref NetNode Node(ushort ID) => ref Singleton<NetManager>.instance.m_nodes.m_buffer[ID];
-        internal static ref NetSegment Segment(ushort ID) => ref Singleton<NetManager>.instance.m_segments.m_buffer[ID];
-        internal static NetManager netMan => Singleton<NetManager>.instance;
-        internal static bool IsJunction(ushort nodeID) => (Node(nodeID).m_flags & NetNode.Flags.Junction) != 0;
-    }
-
-    public static class LogOnceT {
-        private static List<string> listLogs = new List<string>();
-        public static void LogOnce(string m) {
-            Debug.Log(m);
-            return;
-            var st = new System.Diagnostics.StackTrace();
-            var sf = st.GetFrame(2);
-            string key = sf.GetMethod().Name + ": " + m;
-            //if (!listLogs.Contains(key))
-            {
-                Debug.Log(key);
-                //listLogs.Add(key);
-            }
-        }
-    }
 } // end namesapce

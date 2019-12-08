@@ -2,12 +2,32 @@ using System;
 using ColossalFramework;
 using ColossalFramework.Math;
 using UnityEngine;
-using static Kian.Mod.ShortCuts;
+using static Kian.Utils.ShortCuts;
 using static Kian.Skins.SkinManager;
+using Kian.Utils;
 using System.Reflection;
 
 namespace Kian.Patch {
     public class NetNodeDetours {
+        private static Material FixMaterial(ushort nodeID, ushort segmentID, NetInfo.Node node) {
+            NetNode thisNode = Node(nodeID);
+            var info = thisNode.Info;
+            var ai = info.m_netAI;
+            Material material = node.m_nodeMaterial;
+            if (!(ai is RoadAI)) {
+                return material;
+            }
+            if (ShowCrosswalks(segmentID, nodeID)) {
+                return material;
+            }
+
+            //Hide crosswalks
+            material = new Material(material);
+            TextureUtils.Flip(material, "_MainTex");
+
+            return material;
+        }
+
         // Token: 0x06003336 RID: 13110 RVA: 0x0022825C File Offset: 0x0022665C
         private void RenderInstance(RenderManager.CameraInfo cameraInfo,
             ushort nodeID, NetInfo info, int iter, NetNode.Flags flags,
@@ -29,14 +49,14 @@ namespace Kian.Patch {
             if (data.m_initialized) {
                 if ((flags & NetNode.Flags.Junction) != NetNode.Flags.None) {
                     if ((data.m_dataInt0 & 8) != 0) {
-                        ushort segment = thisNode.GetSegment(data.m_dataInt0 & 7);
-                        ushort segment2 = thisNode.GetSegment(data.m_dataInt0 >> 4);
-                        if (segment != 0 && segment2 != 0) {
+                        ushort segmentID = thisNode.GetSegment(data.m_dataInt0 & 7);
+                        ushort segmentID2 = thisNode.GetSegment(data.m_dataInt0 >> 4);
+                        if (segmentID != 0 && segmentID2 != 0) {
                             NetManager instance = Singleton<NetManager>.instance;
-                            info = instance.m_segments.m_buffer[(int)segment].Info;
-                            NetInfo info2 = instance.m_segments.m_buffer[(int)segment2].Info;
+                            info = instance.m_segments.m_buffer[(int)segmentID].Info;
+                            NetInfo info2 = instance.m_segments.m_buffer[(int)segmentID2].Info;
                             NetNode.Flags flags2 = flags;
-                            if (((instance.m_segments.m_buffer[(int)segment].m_flags | instance.m_segments.m_buffer[(int)segment2].m_flags) & NetSegment.Flags.Collapsed) != NetSegment.Flags.None) {
+                            if (((instance.m_segments.m_buffer[(int)segmentID].m_flags | instance.m_segments.m_buffer[(int)segmentID2].m_flags) & NetSegment.Flags.Collapsed) != NetSegment.Flags.None) {
                                 flags2 |= NetNode.Flags.Collapsed;
                             }
                             for (int i = 0; i < info.m_nodes.Length; i++) {
@@ -48,9 +68,9 @@ namespace Kian.Patch {
                                         dataVector.w = data.m_dataFloat0;
                                     }
                                     if ((node.m_connectGroup & NetInfo.ConnectGroup.Oneway) != NetInfo.ConnectGroup.None) {
-                                        bool flag = instance.m_segments.m_buffer[(int)segment].m_startNode == nodeID == ((instance.m_segments.m_buffer[(int)segment].m_flags & NetSegment.Flags.Invert) == NetSegment.Flags.None);
+                                        bool flag = instance.m_segments.m_buffer[(int)segmentID].m_startNode == nodeID == ((instance.m_segments.m_buffer[(int)segmentID].m_flags & NetSegment.Flags.Invert) == NetSegment.Flags.None);
                                         if (info2.m_hasBackwardVehicleLanes != info2.m_hasForwardVehicleLanes || (node.m_connectGroup & NetInfo.ConnectGroup.Directional) != NetInfo.ConnectGroup.None) {
-                                            bool flag2 = instance.m_segments.m_buffer[(int)segment2].m_startNode == nodeID == ((instance.m_segments.m_buffer[(int)segment2].m_flags & NetSegment.Flags.Invert) == NetSegment.Flags.None);
+                                            bool flag2 = instance.m_segments.m_buffer[(int)segmentID2].m_startNode == nodeID == ((instance.m_segments.m_buffer[(int)segmentID2].m_flags & NetSegment.Flags.Invert) == NetSegment.Flags.None);
                                             if (flag == flag2) {
                                                 goto IL_570;
                                             }
@@ -81,7 +101,10 @@ namespace Kian.Patch {
                                         }
                                         NetManager netManager = instance;
                                         netManager.m_drawCallData.m_defaultCalls = netManager.m_drawCallData.m_defaultCalls + 1;
-                                        Graphics.DrawMesh(node.m_nodeMesh, data.m_position, data.m_rotation, node.m_nodeMaterial, node.m_layer, null, 0, instance.m_materialBlock);
+                                        #region MODIFICATION
+                                        Material material = FixMaterial(nodeID, segmentID, node);
+                                        Graphics.DrawMesh(node.m_nodeMesh, data.m_position, data.m_rotation, material, node.m_layer, null, 0, instance.m_materialBlock);
+                                        #endregion
                                     } else {
                                         NetInfo.LodValue combinedLod = node.m_combinedLod;
                                         if (combinedLod != null) {
@@ -110,18 +133,18 @@ namespace Kian.Patch {
                             }
                         }
                     } else {
-                        ushort segment3 = thisNode.GetSegment(data.m_dataInt0 & 7);
-                        if (segment3 != 0) {
+                        ushort segmentID = thisNode.GetSegment(data.m_dataInt0 & 7);
+                        if (segmentID != 0) {
                             NetManager instance2 = Singleton<NetManager>.instance;
-                            info = instance2.m_segments.m_buffer[(int)segment3].Info;
+                            info = instance2.m_segments.m_buffer[(int)segmentID].Info;
                             for (int j = 0; j < info.m_nodes.Length; j++) {
-                                NetInfo.Node node2 = info.m_nodes[j];
-                                if (node2.CheckFlags(flags) && !node2.m_directConnect) {
+                                NetInfo.Node node = info.m_nodes[j];
+                                if (node.CheckFlags(flags) && !node.m_directConnect) {
                                     Vector4 dataVector3 = data.m_extraData.m_dataVector4;
-                                    if (node2.m_requireWindSpeed) {
+                                    if (node.m_requireWindSpeed) {
                                         dataVector3.w = data.m_dataFloat0;
                                     }
-                                    if (cameraInfo.CheckRenderDistance(data.m_position, node2.m_lodRenderDistance)) {
+                                    if (cameraInfo.CheckRenderDistance(data.m_position, node.m_lodRenderDistance)) {
                                         instance2.m_materialBlock.Clear();
                                         instance2.m_materialBlock.SetMatrix(instance2.ID_LeftMatrix, data.m_dataMatrix0);
                                         instance2.m_materialBlock.SetMatrix(instance2.ID_RightMatrix, data.m_extraData.m_dataMatrix2);
@@ -132,18 +155,21 @@ namespace Kian.Patch {
                                         instance2.m_materialBlock.SetVector(instance2.ID_SideScale, data.m_dataVector2);
                                         instance2.m_materialBlock.SetVector(instance2.ID_ObjectIndex, dataVector3);
                                         instance2.m_materialBlock.SetColor(instance2.ID_Color, data.m_dataColor0);
-                                        if (node2.m_requireSurfaceMaps && data.m_dataTexture1 != null) {
+                                        if (node.m_requireSurfaceMaps && data.m_dataTexture1 != null) {
                                             instance2.m_materialBlock.SetTexture(instance2.ID_SurfaceTexA, data.m_dataTexture0);
                                             instance2.m_materialBlock.SetTexture(instance2.ID_SurfaceTexB, data.m_dataTexture1);
                                             instance2.m_materialBlock.SetVector(instance2.ID_SurfaceMapping, data.m_dataVector3);
                                         }
                                         NetManager netManager2 = instance2;
                                         netManager2.m_drawCallData.m_defaultCalls = netManager2.m_drawCallData.m_defaultCalls + 1;
-                                        Graphics.DrawMesh(node2.m_nodeMesh, data.m_position, data.m_rotation, node2.m_nodeMaterial, node2.m_layer, null, 0, instance2.m_materialBlock);
+                                        #region MODIFICATION
+                                        Material material = FixMaterial(nodeID, segmentID, node);
+                                        Graphics.DrawMesh(node.m_nodeMesh, data.m_position, data.m_rotation, material, node.m_layer, null, 0, instance2.m_materialBlock);
+                                        #endregion
                                     } else {
-                                        NetInfo.LodValue combinedLod2 = node2.m_combinedLod;
+                                        NetInfo.LodValue combinedLod2 = node.m_combinedLod;
                                         if (combinedLod2 != null) {
-                                            if (node2.m_requireSurfaceMaps && data.m_dataTexture0 != combinedLod2.m_surfaceTexA) {
+                                            if (node.m_requireSurfaceMaps && data.m_dataTexture0 != combinedLod2.m_surfaceTexA) {
                                                 if (combinedLod2.m_lodCount != 0) {
                                                     NetNode.RenderLod(cameraInfo, combinedLod2);
                                                 }
@@ -174,13 +200,13 @@ namespace Kian.Patch {
                 } else if ((flags & NetNode.Flags.End) != NetNode.Flags.None) {
                     NetManager instance3 = Singleton<NetManager>.instance;
                     for (int k = 0; k < info.m_nodes.Length; k++) {
-                        NetInfo.Node node3 = info.m_nodes[k];
-                        if (node3.CheckFlags(flags) && !node3.m_directConnect) {
+                        NetInfo.Node node = info.m_nodes[k];
+                        if (node.CheckFlags(flags) && !node.m_directConnect) {
                             Vector4 dataVector4 = data.m_extraData.m_dataVector4;
-                            if (node3.m_requireWindSpeed) {
+                            if (node.m_requireWindSpeed) {
                                 dataVector4.w = data.m_dataFloat0;
                             }
-                            if (cameraInfo.CheckRenderDistance(data.m_position, node3.m_lodRenderDistance)) {
+                            if (cameraInfo.CheckRenderDistance(data.m_position, node.m_lodRenderDistance)) {
                                 instance3.m_materialBlock.Clear();
                                 instance3.m_materialBlock.SetMatrix(instance3.ID_LeftMatrix, data.m_dataMatrix0);
                                 instance3.m_materialBlock.SetMatrix(instance3.ID_RightMatrix, data.m_extraData.m_dataMatrix2);
@@ -191,18 +217,18 @@ namespace Kian.Patch {
                                 instance3.m_materialBlock.SetVector(instance3.ID_SideScale, data.m_dataVector2);
                                 instance3.m_materialBlock.SetVector(instance3.ID_ObjectIndex, dataVector4);
                                 instance3.m_materialBlock.SetColor(instance3.ID_Color, data.m_dataColor0);
-                                if (node3.m_requireSurfaceMaps && data.m_dataTexture1 != null) {
+                                if (node.m_requireSurfaceMaps && data.m_dataTexture1 != null) {
                                     instance3.m_materialBlock.SetTexture(instance3.ID_SurfaceTexA, data.m_dataTexture0);
                                     instance3.m_materialBlock.SetTexture(instance3.ID_SurfaceTexB, data.m_dataTexture1);
                                     instance3.m_materialBlock.SetVector(instance3.ID_SurfaceMapping, data.m_dataVector3);
                                 }
                                 NetManager netManager3 = instance3;
                                 netManager3.m_drawCallData.m_defaultCalls = netManager3.m_drawCallData.m_defaultCalls + 1;
-                                Graphics.DrawMesh(node3.m_nodeMesh, data.m_position, data.m_rotation, node3.m_nodeMaterial, node3.m_layer, null, 0, instance3.m_materialBlock);
+                                Graphics.DrawMesh(node.m_nodeMesh, data.m_position, data.m_rotation, node.m_nodeMaterial, node.m_layer, null, 0, instance3.m_materialBlock);
                             } else {
-                                NetInfo.LodValue combinedLod3 = node3.m_combinedLod;
+                                NetInfo.LodValue combinedLod3 = node.m_combinedLod;
                                 if (combinedLod3 != null) {
-                                    if (node3.m_requireSurfaceMaps && data.m_dataTexture0 != combinedLod3.m_surfaceTexA) {
+                                    if (node.m_requireSurfaceMaps && data.m_dataTexture0 != combinedLod3.m_surfaceTexA) {
                                         if (combinedLod3.m_lodCount != 0) {
                                             NetNode.RenderLod(cameraInfo, combinedLod3);
                                         }
@@ -231,37 +257,37 @@ namespace Kian.Patch {
                 } else if ((flags & NetNode.Flags.Bend) != NetNode.Flags.None) {
                     NetManager instance4 = Singleton<NetManager>.instance;
                     for (int l = 0; l < info.m_segments.Length; l++) {
-                        NetInfo.Segment segment4 = info.m_segments[l];
+                        NetInfo.Segment segmentID = info.m_segments[l];
                         bool flag3;
-                        if (segment4.CheckFlags(info.m_netAI.GetBendFlags(nodeID, ref thisNode), out flag3) && !segment4.m_disableBendNodes) {
+                        if (segmentID.CheckFlags(info.m_netAI.GetBendFlags(nodeID, ref thisNode), out flag3) && !segmentID.m_disableBendNodes) {
                             Vector4 dataVector5 = data.m_dataVector3;
                             Vector4 dataVector6 = data.m_dataVector0;
-                            if (segment4.m_requireWindSpeed) {
+                            if (segmentID.m_requireWindSpeed) {
                                 dataVector5.w = data.m_dataFloat0;
                             }
                             if (flag3) {
                                 dataVector6.x = -dataVector6.x;
                                 dataVector6.y = -dataVector6.y;
                             }
-                            if (cameraInfo.CheckRenderDistance(data.m_position, segment4.m_lodRenderDistance)) {
+                            if (cameraInfo.CheckRenderDistance(data.m_position, segmentID.m_lodRenderDistance)) {
                                 instance4.m_materialBlock.Clear();
                                 instance4.m_materialBlock.SetMatrix(instance4.ID_LeftMatrix, data.m_dataMatrix0);
                                 instance4.m_materialBlock.SetMatrix(instance4.ID_RightMatrix, data.m_extraData.m_dataMatrix2);
                                 instance4.m_materialBlock.SetVector(instance4.ID_MeshScale, dataVector6);
                                 instance4.m_materialBlock.SetVector(instance4.ID_ObjectIndex, dataVector5);
                                 instance4.m_materialBlock.SetColor(instance4.ID_Color, data.m_dataColor0);
-                                if (segment4.m_requireSurfaceMaps && data.m_dataTexture1 != null) {
+                                if (segmentID.m_requireSurfaceMaps && data.m_dataTexture1 != null) {
                                     instance4.m_materialBlock.SetTexture(instance4.ID_SurfaceTexA, data.m_dataTexture0);
                                     instance4.m_materialBlock.SetTexture(instance4.ID_SurfaceTexB, data.m_dataTexture1);
                                     instance4.m_materialBlock.SetVector(instance4.ID_SurfaceMapping, data.m_dataVector1);
                                 }
                                 NetManager netManager4 = instance4;
                                 netManager4.m_drawCallData.m_defaultCalls = netManager4.m_drawCallData.m_defaultCalls + 1;
-                                Graphics.DrawMesh(segment4.m_segmentMesh, data.m_position, data.m_rotation, segment4.m_segmentMaterial, segment4.m_layer, null, 0, instance4.m_materialBlock);
+                                Graphics.DrawMesh(segmentID.m_segmentMesh, data.m_position, data.m_rotation, segmentID.m_segmentMaterial, segmentID.m_layer, null, 0, instance4.m_materialBlock);
                             } else {
-                                NetInfo.LodValue combinedLod4 = segment4.m_combinedLod;
+                                NetInfo.LodValue combinedLod4 = segmentID.m_combinedLod;
                                 if (combinedLod4 != null) {
-                                    if (segment4.m_requireSurfaceMaps && data.m_dataTexture0 != combinedLod4.m_surfaceTexA) {
+                                    if (segmentID.m_requireSurfaceMaps && data.m_dataTexture0 != combinedLod4.m_surfaceTexA) {
                                         if (combinedLod4.m_lodCount != 0) {
                                             NetSegment.RenderLod(cameraInfo, combinedLod4);
                                         }
@@ -284,9 +310,9 @@ namespace Kian.Patch {
                         }
                     }
                     for (int m = 0; m < info.m_nodes.Length; m++) {
-                        ushort segment5 = thisNode.GetSegment(data.m_dataInt0 & 7);
-                        ushort segment6 = thisNode.GetSegment(data.m_dataInt0 >> 4);
-                        if (((instance4.m_segments.m_buffer[(int)segment5].m_flags | instance4.m_segments.m_buffer[(int)segment6].m_flags) & NetSegment.Flags.Collapsed) != NetSegment.Flags.None) {
+                        ushort segmentID = thisNode.GetSegment(data.m_dataInt0 & 7);
+                        ushort segmentID2 = thisNode.GetSegment(data.m_dataInt0 >> 4);
+                        if (((instance4.m_segments.m_buffer[(int)segmentID].m_flags | instance4.m_segments.m_buffer[(int)segmentID2].m_flags) & NetSegment.Flags.Collapsed) != NetSegment.Flags.None) {
                             NetNode.Flags flags3 = flags | NetNode.Flags.Collapsed;
                         }
                         NetInfo.Node node4 = info.m_nodes[m];
@@ -297,8 +323,8 @@ namespace Kian.Patch {
                                 dataVector7.w = data.m_dataFloat0;
                             }
                             if ((node4.m_connectGroup & NetInfo.ConnectGroup.Oneway) != NetInfo.ConnectGroup.None) {
-                                bool flag4 = instance4.m_segments.m_buffer[(int)segment5].m_startNode == nodeID == ((instance4.m_segments.m_buffer[(int)segment5].m_flags & NetSegment.Flags.Invert) == NetSegment.Flags.None);
-                                bool flag5 = instance4.m_segments.m_buffer[(int)segment6].m_startNode == nodeID == ((instance4.m_segments.m_buffer[(int)segment6].m_flags & NetSegment.Flags.Invert) == NetSegment.Flags.None);
+                                bool flag4 = instance4.m_segments.m_buffer[(int)segmentID].m_startNode == nodeID == ((instance4.m_segments.m_buffer[(int)segmentID].m_flags & NetSegment.Flags.Invert) == NetSegment.Flags.None);
+                                bool flag5 = instance4.m_segments.m_buffer[(int)segmentID2].m_startNode == nodeID == ((instance4.m_segments.m_buffer[(int)segmentID2].m_flags & NetSegment.Flags.Invert) == NetSegment.Flags.None);
                                 if (flag4 == flag5) {
                                     goto IL_1637;
                                 }

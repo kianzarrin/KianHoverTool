@@ -1,8 +1,6 @@
 using System;
 using UnityEngine;
 using System.Reflection;
-using ColossalFramework;
-using static Kian.Mod.LogOnceT;
 
 namespace Kian.Patch {
     public abstract class HookBase : MonoBehaviour {

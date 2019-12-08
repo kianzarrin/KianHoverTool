@@ -1,6 +1,6 @@
 using ColossalFramework.UI;
 using UnityEngine;
-using static Kian.Mod.ShortCuts;
+using static Kian.Utils.ShortCuts;
 
 namespace Kian.HoverTool {
     public abstract class KianToolBase : DefaultTool

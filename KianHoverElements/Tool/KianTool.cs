@@ -5,7 +5,7 @@ using UnityEngine;
 using Kian.Skins;
 
 namespace Kian.HoverTool {
-    using static Kian.Mod.ShortCuts;
+    using static Kian.Utils.ShortCuts;
     public sealed class KianTool : KianToolBase {
         ToolButton button;
         public KianTool() : base() {
