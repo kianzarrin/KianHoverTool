@@ -51,33 +51,24 @@ namespace Kian.HoverTool {
             if(HoveredSegmentId == 0) {
                 return;
             }
-            //if(!hooked) {
-            //    Hook.HookAll();
-            //}
 
-            SkinManager.Toggle(HoveredSegmentId);
+            SkinManager.Toggle(HoveredSegmentId, HoveredNodeId);
 
-            //var seg = Segment(HoveredSegmentId);
-            //Type t = seg.Info.m_netAI.GetType();
-            //Debug.Log($"netAI type is {t}");
-            //Color color = seg.Info.m_netAI.GetColor(HoveredSegmentId, ref seg, InfoManager.InfoMode.None);
-            //Debug.Log($"get color returned {color}");
-
-            Refersh();
-            Refersh(HoveredSegmentId);
+            Refresh();
+            Refresh(HoveredSegmentId);
         }
 
         protected override void OnSecondaryMouseClicked() {
             throw new System.NotImplementedException();
         }
 
-        public void Refersh(ushort segmentID) {
+        public void Refresh(ushort segmentID) {
             Singleton<NetManager>.instance.UpdateSegmentColors(segmentID);
             netMan.UpdateSegment(segmentID);
             Segment(segmentID).UpdateSegment(segmentID);
         }
 
-        public void Refersh() {
+        public void Refresh() {
             Singleton<NetManager>.instance.UpdateSegmentColors();
             Singleton<NetManager>.instance.UpdateNodeColors();
         }

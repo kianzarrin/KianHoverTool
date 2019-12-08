@@ -10,8 +10,6 @@ namespace Kian.Patch {
         public static List<HookBase> hooks = new List<HookBase>();
 
         public Hook() {
-            hooks.Add(new GetSegmentColor());
-            hooks.Add(new GetNodeColor());
             hooks.Add(new RenderInstance());
         }
 
@@ -37,36 +35,11 @@ namespace Kian.Patch {
             Debug.Log("unhooked everything");
         }
 
-        public class GetSegmentColor : HookBase {
-            private Type[] args => new[] { typeof(ushort), typeof(NetSegment).MakeByRefType(), typeof(InfoManager.InfoMode) };
-            public override MethodInfo From => typeof(RoadAI).GetMethod("GetColor", args);
-            public override MethodInfo To => typeof(RoadBaseAIDetours).GetMethod("GetColor",args);
-        }
-
-        public class GetNodeColor : HookBase {
-            private Type[] args => new[] { typeof(ushort), typeof(NetNode).MakeByRefType(), typeof(InfoManager.InfoMode) };
-            public override MethodInfo From => typeof(RoadAI).GetMethod("GetColor", args);
-            public override MethodInfo To => typeof(RoadBaseAIDetours).GetMethod("GetColor",args);
-        }
-
-        //public void NetSegment.RenderInstance(RenderManager.CameraInfo cameraInfo, ushort segmentID, int layerMask)
         public class RenderInstance : HookBase {
             private BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
-            public override MethodInfo From => typeof(NetSegment).GetMethod("RenderInstance", flags);
-            public override MethodInfo To => typeof(NetSegmentDetours).GetMethod("RenderInstance");
+            public override MethodInfo From => typeof(NetNode).GetMethod("RenderInstance", flags);
+            public override MethodInfo To => typeof(NetNodeDetours).GetMethod("RenderInstance");
         }
-
-        // // private static void NetTool.RenderSegment(NetInfo info, NetSegment.Flags flags, Vector3 startPosition, Vector3 endPosition, Vector3 startDirection, Vector3 endDirection, bool smoothStart, bool smoothEnd)
-        //public class RenderSegment : HookBase {
-        //    public override MethodInfo From => typeof(NetTool).GetMethod("RenderSegment");
-        //    public override MethodInfo To => typeof(ColorDetours).GetMethod("RenderSegment");
-        //}
-
-        // //private static void NetTool.RenderNode(NetInfo info, Vector3 position, Vector3 direction)
-        //public class RenderNode : HookBase {
-        //    public override MethodInfo From => typeof(NetTool).GetMethod("RenderNode");
-        //    public override MethodInfo To => typeof(ColorDetours).GetMethod("RenderNode");
-        //}
 
     } // end class Hook
 }

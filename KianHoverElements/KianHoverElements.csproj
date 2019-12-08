@@ -68,9 +68,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Patch\Detours.cs" />
+    <Compile Include="Patch\NetToolExt.cs" />
+    <Compile Include="Patch\NetNodeDetours.cs" />
     <Compile Include="Patch\HookBase.cs" />
-    <Compile Include="Patch\netAI_Detours.cs" />
     <Compile Include="SkinManager.cs" />
     <Compile Include="Patch\RedirectionHelper.cs" />
     <Compile Include="Patch\Hook.cs" />

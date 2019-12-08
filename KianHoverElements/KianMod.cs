@@ -46,6 +46,7 @@ namespace Kian.Mod
         internal static ref NetNode Node(ushort ID) => ref Singleton<NetManager>.instance.m_nodes.m_buffer[ID];
         internal static ref NetSegment Segment(ushort ID) => ref Singleton<NetManager>.instance.m_segments.m_buffer[ID];
         internal static NetManager netMan => Singleton<NetManager>.instance;
+        internal static bool IsJunction(ushort nodeID) => (Node(nodeID).m_flags & NetNode.Flags.Junction) != 0;
     }
 
     public static class LogOnceT {

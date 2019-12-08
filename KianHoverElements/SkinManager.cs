@@ -1,46 +1,40 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using static Kian.Mod.ShortCuts;
 
 namespace Kian.Skins
 {
     public static class SkinManager {
-        public static Color?[] SegmentSkins = new Color?[NetManager.MAX_SEGMENT_COUNT];
-        public static Color?[] NodeSkins = new Color?[NetManager.MAX_NODE_COUNT];
+        public static Hashtable Crosswalks = new Hashtable();
 
-        public static void Toggle(ushort segmentID) {
-            if(segmentID == 0) {
+        private static string GetKey(ushort segmentID, ushort nodeID) => $"{segmentID}:{nodeID}";
+        public static void Toggle(ushort segmentID, ushort nodeID) {
+            if(segmentID == 0 || nodeID == 0) {
                 return;
             }
-            ref Color? skin = ref SegmentSkins[segmentID];
-            if (skin == null) {
-                skin = new Color(255, 0, 0);
+            var key = GetKey(segmentID, nodeID);
+            if (Crosswalks.Contains(key) && (bool)Crosswalks[key]) {
+                Crosswalks[key] = false;
             } else {
-                skin = null;
+                Crosswalks[key] = true;
             }
-
-            var seg = Segment(segmentID);
-            NodeSkins[seg.m_startNode] = skin;
-            NodeSkins[seg.m_endNode] = skin;
-            Debug.Log($"skin color toggled. new color = {SegmentSkins[segmentID]}");
-
+            Debug.Log($"crosswalks color toggled. new value = {key} : {Crosswalks[key]}");
         }
 
-        public static class Util {
-            public static Color SegColor(ushort id, Color color) {
-                Color ret = SegmentSkins?[id] ?? color;
-                if (SegmentSkins?[id] != null) {
-                    Debug.Log(Environment.StackTrace + $"new color id={id} ret={ret}");
-                }
-                return ret;
-            }
-            public static Color NodeColor(ushort id, Color color){
-                Color ret = NodeSkins?[id] ?? color;
-                if (NodeSkins?[id] != null) {
-                    Debug.Log(Environment.StackTrace + $"new color id={id} ret={ret}");
-                }
-                return ret;
-            }
+        public static bool ShowCrosswalks0(ushort segmentID, ushort nodeID, bool original=true) {
+            var key = GetKey(segmentID, nodeID);
+            bool ret = original;
+            ret = Crosswalks.Contains(key);
+            ret &= (bool)Crosswalks[key];
+            return ret;
+        }
+        public static bool ShowCrosswalks(ushort segmentID, ushort nodeID) {
+            var key = GetKey(segmentID, nodeID);
+            bool ret = IsJunction(nodeID);
+            ret &= Crosswalks.Contains(key);
+            ret &= (bool)Crosswalks[key];
+            return ret;
         }
 
     } // end class
