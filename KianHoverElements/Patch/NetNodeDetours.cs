@@ -1,6 +1,6 @@
 using System;
 using ColossalFramework;
-using ColossalFramework.Math;
+using System.Collections;
 using UnityEngine;
 using static Kian.Utils.ShortCuts;
 using static Kian.Skins.SkinManager;
@@ -9,27 +9,35 @@ using System.Reflection;
 
 namespace Kian.Patch {
     public class NetNodeDetours {
-        private static Material FixMaterial(ushort nodeID, ushort segmentID, NetInfo.Node node) {
-            NetNode thisNode = Node(nodeID);
-            var info = thisNode.Info;
-            var ai = info.m_netAI;
-            Material material = node.m_nodeMaterial;
-            if (!(ai is RoadAI)) {
-                return material;
-            }
-            if (ShowCrosswalks(segmentID, nodeID)) {
-                return material;
+        public static Hashtable NodeMaterialTable = new Hashtable(100);
+
+        public static Material HideCrossing(NetInfo.Node node) {
+            if (NodeMaterialTable.Contains(node)) {
+                return (Material)NodeMaterialTable[node];
             }
 
-            //Hide crosswalks
-            material = new Material(material);
+            Material material = new Material(node.m_nodeMaterial);
             TextureUtils.Flip(material, "_MainTex");
-
+            NodeMaterialTable[node] = material;
             return material;
         }
 
+        private static Material FixMaterial(ushort nodeID, ushort segmentID, NetInfo.Node node) {
+            Material ret = node.m_nodeMaterial;
+            //return ret // performance
+
+            if (Node(nodeID).Info.m_netAI is RoadAI && HasCrossingBan(segmentID, nodeID)) {
+                ret = HideCrossing(node);
+            }
+
+            return ret;
+
+            //MaterialPropertyBlock block = netMan.m_materialBlock;//TODO investigate
+            // TODO 2: mess around with NetSegment.RenderLod(cameraInfo, combinedLod); for far distance
+        }
+
         // Token: 0x06003336 RID: 13110 RVA: 0x0022825C File Offset: 0x0022665C
-        private void RenderInstance(RenderManager.CameraInfo cameraInfo,
+        public void RenderInstance(RenderManager.CameraInfo cameraInfo,
             ushort nodeID, NetInfo info, int iter, NetNode.Flags flags,
             ref uint instanceIndex, ref RenderManager.Instance data) {
             NetNode thisNode = Node(nodeID);
@@ -387,46 +395,64 @@ namespace Kian.Patch {
         }
 
 
-        private void RefreshJunctionData(ushort nodeID, NetInfo info, uint instanceIndex) {
-            Type[] parameters = new Type[] {typeof(ushort), typeof(NetInfo), typeof(uint) };
-            BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
-            var method = typeof(NetNode).GetMethod("RefreshJunctionData",flags,null, parameters, null);
-            if(method == null) {
-                Debug.LogError("NetNodeDetours: RefreshJunctionData() invocation failed.");
-                return;
+        private static MethodInfo method_RefreshJunctionData;
+        private static MethodInfo method_RefreshBendData;
+        private static MethodInfo method_RefreshEndData;
+        public static void Init() {
+            {
+                Type[] parameters = new Type[] { typeof(ushort), typeof(NetInfo), typeof(uint) };
+                BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
+                method_RefreshJunctionData = typeof(NetNode).GetMethod("RefreshJunctionData", flags, null, parameters, null);
+                if (method_RefreshJunctionData == null) {
+                    Debug.LogError("NetNodeDetours: RefreshJunctionData() failed.");
+                    return;
+                } else {
+                    Debug.Log("NetNodeDetours: aquired private method " + method_RefreshJunctionData);
+                }
             }
+            {
+                BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
+                method_RefreshBendData = typeof(NetNode).GetMethod("RefreshBendData", flags);
+                if (method_RefreshBendData == null) {
+                    Debug.LogError("NetNodeDetours: RefreshBendData() failed.");
+                    return;
+                } else {
+                    Debug.Log("NetNodeDetours: aquired private method " + method_RefreshBendData);
+                }
+            }
+            {
+                BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
+                method_RefreshEndData = typeof(NetNode).GetMethod("RefreshEndData", flags);
+                if (method_RefreshEndData == null) {
+                    Debug.LogError("NetNodeDetours: RefreshEndData() invocation failed.");
+                    return;
+                } else {
+                    Debug.Log("NetNodeDetours: aquired private method " + method_RefreshEndData);
+                }
+            }
+        }
 
+
+        private void RefreshJunctionData(ushort nodeID, NetInfo info, uint instanceIndex) {
             NetNode thisNode = Node(nodeID);
             object[] args = new object[] { nodeID, info, instanceIndex };
-            Debug.Log("invoking NetNode :: " + method);
-            method.Invoke(thisNode, args);
+            //Debug.Log("invoking NetNode :: " + method_RefreshJunctionData);
+            method_RefreshJunctionData.Invoke(thisNode, args);
         }
 
         private void RefreshBendData(ushort nodeID, NetInfo info, uint instanceIndex, ref RenderManager.Instance data) {
-            BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
-            var method = typeof(NetNode).GetMethod("RefreshBendData", flags);
-            if (method == null) {
-                Debug.LogError("NetNodeDetours: RefreshBendData() invocation failed.");
-                return;
-            }
-
             NetNode thisNode = Node(nodeID);
             object[] args = new object[] { nodeID, info, instanceIndex, data };
-            method.Invoke(thisNode, args);
+            //Debug.Log("invoking NetNode :: " + method_RefreshBendData);
+            method_RefreshBendData.Invoke(thisNode, args);
             data = (RenderManager.Instance)args[3];
         }
 
         private void RefreshEndData(ushort nodeID, NetInfo info, uint instanceIndex, ref RenderManager.Instance data) {
-            BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
-            var method = typeof(NetNode).GetMethod("RefreshEndData", flags);
-            if (method == null) {
-                Debug.LogError("NetNodeDetours: RefreshEndData() invocation failed.");
-                return;
-            }
-
             NetNode thisNode = Node(nodeID);
             object[] args = new object[] { nodeID, info, instanceIndex, data };
-            method.Invoke(thisNode, args);
+            //Debug.Log("invoking NetNode :: " + method_RefreshEndData);
+            method_RefreshEndData.Invoke(thisNode, args);
             data = (RenderManager.Instance)args[3];
         }
     }

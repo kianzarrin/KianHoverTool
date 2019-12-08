@@ -39,15 +39,19 @@ namespace Kian.Skins
             Debug.Log($"crosswalks color toggled. {segmentID} + {bStart} = {idx}. new value =  {Crosswalks[idx]}");
         }
 
-        public static bool ShowCrosswalks(ushort segmentID, ushort nodeID) {
+        public static bool HasCrossingBan(ushort segmentID, ushort nodeID) {
             bool bStart = Segment(segmentID).m_startNode == nodeID;
-            return ShowCrosswalks(segmentID, bStart);
+            return HasCrossingBan(segmentID, bStart);
         }
-        public static bool ShowCrosswalks(ushort segmentID, bool bStart) {
+        public static bool HasCrossingBan(ushort segmentID, bool bStart) {
             int idx = GetIndex(segmentID, bStart);
             bool ret = Crosswalks[idx] ?? false;
             return ret;
         }
 
     } // end class
+
+    public static class TextureManger {
+    }
+
 }

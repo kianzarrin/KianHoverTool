@@ -11,6 +11,7 @@ namespace Kian.Patch {
 
         public Hook() {
             hooks.Add(new RenderInstance());
+            NetNodeDetours.Init();
         }
 
         public static void Create() => instance = new Hook();
