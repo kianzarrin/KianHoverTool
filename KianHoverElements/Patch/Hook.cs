@@ -10,8 +10,9 @@ namespace Kian.Patch {
         public static List<HookBase> hooks = new List<HookBase>();
 
         public Hook() {
-            hooks.Add(new RenderInstance());
             NetNodeDetours.Init();
+            hooks.Add(new RenderInstance());
+            hooks.Add(new RenderLod());
         }
 
         public static void Create() => instance = new Hook();
@@ -41,6 +42,13 @@ namespace Kian.Patch {
             public override MethodInfo From => typeof(NetNode).GetMethod("RenderInstance", flags);
             public override MethodInfo To => typeof(NetNodeDetours).GetMethod("RenderInstance");
         }
+
+        public class RenderLod : HookBase {
+            public override MethodInfo From => typeof(NetNode).GetMethod("RenderLod");
+            public override MethodInfo To => typeof(NetNodeDetours).GetMethod("RenderLod");
+        }
+
+
 
     } // end class Hook
 }

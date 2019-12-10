@@ -11,30 +11,22 @@ namespace Kian.Patch {
     public class NetNodeDetours {
         public static Hashtable NodeMaterialTable = new Hashtable(100);
 
-        public static Material HideCrossing(NetInfo.Node node) {
-            if (NodeMaterialTable.Contains(node)) {
-                return (Material)NodeMaterialTable[node];
+        public static Material HideCrossing(Material material) {
+            if (NodeMaterialTable.Contains(material)) {
+                return (Material)NodeMaterialTable[material];
             }
 
-            Material material = new Material(node.m_nodeMaterial);
-            TextureUtils.Flip(material, "_MainTex");
-            NodeMaterialTable[node] = material;
-            return material;
-        }
-
-        private static Material FixMaterial(ushort nodeID, ushort segmentID, NetInfo.Node node) {
-            Material ret = node.m_nodeMaterial;
-            //return ret // performance
-
-            if (Node(nodeID).Info.m_netAI is RoadAI && HasCrossingBan(segmentID, nodeID)) {
-                ret = HideCrossing(node);
-            }
-
+            Material ret = new Material(material);
+            TextureUtils.Flip(ret, "_MainTex");
+            TextureUtils.Flip(ret, "_APRMap");
+            //TextureUtils.Clean(ret);
+            NodeMaterialTable[material] = ret;
             return ret;
-
-            //MaterialPropertyBlock block = netMan.m_materialBlock;//TODO investigate
-            // TODO 2: mess around with NetSegment.RenderLod(cameraInfo, combinedLod); for far distance
         }
+        private static bool ShouldHideCrossing(ushort nodeID, ushort segmentID) {
+            return Node(nodeID).Info.m_netAI is RoadAI && HasCrossingBan(segmentID, nodeID);
+        }
+
 
         // Token: 0x06003336 RID: 13110 RVA: 0x0022825C File Offset: 0x0022665C
         public void RenderInstance(RenderManager.CameraInfo cameraInfo,
@@ -109,10 +101,7 @@ namespace Kian.Patch {
                                         }
                                         NetManager netManager = instance;
                                         netManager.m_drawCallData.m_defaultCalls = netManager.m_drawCallData.m_defaultCalls + 1;
-                                        #region MODIFICATION
-                                        Material material = FixMaterial(nodeID, segmentID, node);
-                                        Graphics.DrawMesh(node.m_nodeMesh, data.m_position, data.m_rotation, material, node.m_layer, null, 0, instance.m_materialBlock);
-                                        #endregion
+                                        Graphics.DrawMesh(node.m_nodeMesh, data.m_position, data.m_rotation, node.m_nodeMaterial, node.m_layer, null, 0, instance.m_materialBlock);
                                     } else {
                                         NetInfo.LodValue combinedLod = node.m_combinedLod;
                                         if (combinedLod != null) {
@@ -152,7 +141,10 @@ namespace Kian.Patch {
                                     if (node.m_requireWindSpeed) {
                                         dataVector3.w = data.m_dataFloat0;
                                     }
-                                    if (cameraInfo.CheckRenderDistance(data.m_position, node.m_lodRenderDistance)) {
+
+                                    // I have not written code to hide crossing when lods are used.
+                                    bool hideCrossing = ShouldHideCrossing(nodeID, segmentID); // MODIFICATION
+                                    if (cameraInfo.CheckRenderDistance(data.m_position, node.m_lodRenderDistance) /* MODIFICATION */ || hideCrossing  ) {
                                         instance2.m_materialBlock.Clear();
                                         instance2.m_materialBlock.SetMatrix(instance2.ID_LeftMatrix, data.m_dataMatrix0);
                                         instance2.m_materialBlock.SetMatrix(instance2.ID_RightMatrix, data.m_extraData.m_dataMatrix2);
@@ -170,10 +162,14 @@ namespace Kian.Patch {
                                         }
                                         NetManager netManager2 = instance2;
                                         netManager2.m_drawCallData.m_defaultCalls = netManager2.m_drawCallData.m_defaultCalls + 1;
-                                        #region MODIFICATION
-                                        Material material = FixMaterial(nodeID, segmentID, node);
+                                        /*************************** BEGIN MODIFICATION ***********************/
+                                        Material material = node.m_nodeMaterial;
+                                        if (hideCrossing) {
+                                            material = HideCrossing(material);
+                                        }
+                                        //MaterialPropertyBlock block = netMan.m_materialBlock;//TODO investigate
                                         Graphics.DrawMesh(node.m_nodeMesh, data.m_position, data.m_rotation, material, node.m_layer, null, 0, instance2.m_materialBlock);
-                                        #endregion
+                                        /*************************** END MODIFICATION ************************/
                                     } else {
                                         NetInfo.LodValue combinedLod2 = node.m_combinedLod;
                                         if (combinedLod2 != null) {
@@ -265,37 +261,37 @@ namespace Kian.Patch {
                 } else if ((flags & NetNode.Flags.Bend) != NetNode.Flags.None) {
                     NetManager instance4 = Singleton<NetManager>.instance;
                     for (int l = 0; l < info.m_segments.Length; l++) {
-                        NetInfo.Segment segmentID = info.m_segments[l];
+                        NetInfo.Segment segment = info.m_segments[l];
                         bool flag3;
-                        if (segmentID.CheckFlags(info.m_netAI.GetBendFlags(nodeID, ref thisNode), out flag3) && !segmentID.m_disableBendNodes) {
+                        if (segment.CheckFlags(info.m_netAI.GetBendFlags(nodeID, ref thisNode), out flag3) && !segment.m_disableBendNodes) {
                             Vector4 dataVector5 = data.m_dataVector3;
                             Vector4 dataVector6 = data.m_dataVector0;
-                            if (segmentID.m_requireWindSpeed) {
+                            if (segment.m_requireWindSpeed) {
                                 dataVector5.w = data.m_dataFloat0;
                             }
                             if (flag3) {
                                 dataVector6.x = -dataVector6.x;
                                 dataVector6.y = -dataVector6.y;
                             }
-                            if (cameraInfo.CheckRenderDistance(data.m_position, segmentID.m_lodRenderDistance)) {
+                            if (cameraInfo.CheckRenderDistance(data.m_position, segment.m_lodRenderDistance)) {
                                 instance4.m_materialBlock.Clear();
                                 instance4.m_materialBlock.SetMatrix(instance4.ID_LeftMatrix, data.m_dataMatrix0);
                                 instance4.m_materialBlock.SetMatrix(instance4.ID_RightMatrix, data.m_extraData.m_dataMatrix2);
                                 instance4.m_materialBlock.SetVector(instance4.ID_MeshScale, dataVector6);
                                 instance4.m_materialBlock.SetVector(instance4.ID_ObjectIndex, dataVector5);
                                 instance4.m_materialBlock.SetColor(instance4.ID_Color, data.m_dataColor0);
-                                if (segmentID.m_requireSurfaceMaps && data.m_dataTexture1 != null) {
+                                if (segment.m_requireSurfaceMaps && data.m_dataTexture1 != null) {
                                     instance4.m_materialBlock.SetTexture(instance4.ID_SurfaceTexA, data.m_dataTexture0);
                                     instance4.m_materialBlock.SetTexture(instance4.ID_SurfaceTexB, data.m_dataTexture1);
                                     instance4.m_materialBlock.SetVector(instance4.ID_SurfaceMapping, data.m_dataVector1);
                                 }
                                 NetManager netManager4 = instance4;
                                 netManager4.m_drawCallData.m_defaultCalls = netManager4.m_drawCallData.m_defaultCalls + 1;
-                                Graphics.DrawMesh(segmentID.m_segmentMesh, data.m_position, data.m_rotation, segmentID.m_segmentMaterial, segmentID.m_layer, null, 0, instance4.m_materialBlock);
+                                Graphics.DrawMesh(segment.m_segmentMesh, data.m_position, data.m_rotation, segment.m_segmentMaterial, segment.m_layer, null, 0, instance4.m_materialBlock);
                             } else {
-                                NetInfo.LodValue combinedLod4 = segmentID.m_combinedLod;
+                                NetInfo.LodValue combinedLod4 = segment.m_combinedLod;
                                 if (combinedLod4 != null) {
-                                    if (segmentID.m_requireSurfaceMaps && data.m_dataTexture0 != combinedLod4.m_surfaceTexA) {
+                                    if (segment.m_requireSurfaceMaps && data.m_dataTexture0 != combinedLod4.m_surfaceTexA) {
                                         if (combinedLod4.m_lodCount != 0) {
                                             NetSegment.RenderLod(cameraInfo, combinedLod4);
                                         }
@@ -432,7 +428,6 @@ namespace Kian.Patch {
             }
         }
 
-
         private void RefreshJunctionData(ushort nodeID, NetInfo info, uint instanceIndex) {
             NetNode thisNode = Node(nodeID);
             object[] args = new object[] { nodeID, info, instanceIndex };
@@ -455,7 +450,63 @@ namespace Kian.Patch {
             method_RefreshEndData.Invoke(thisNode, args);
             data = (RenderManager.Instance)args[3];
         }
+
+        public static void RenderLod(RenderManager.CameraInfo cameraInfo, NetInfo.LodValue lod) {
+            NetManager instance = Singleton<NetManager>.instance;
+            MaterialPropertyBlock materialBlock = instance.m_materialBlock;
+            materialBlock.Clear();
+            Mesh mesh;
+            int num;
+            if (lod.m_lodCount <= 1) {
+                mesh = lod.m_key.m_mesh.m_mesh1;
+                num = 1;
+            } else if (lod.m_lodCount <= 4) {
+                mesh = lod.m_key.m_mesh.m_mesh4;
+                num = 4;
+            } else {
+                mesh = lod.m_key.m_mesh.m_mesh8;
+                num = 8;
+            }
+            for (int i = lod.m_lodCount; i < num; i++) {
+                lod.m_leftMatrices[i] = default(Matrix4x4);
+                lod.m_leftMatricesB[i] = default(Matrix4x4);
+                lod.m_rightMatrices[i] = default(Matrix4x4);
+                lod.m_rightMatricesB[i] = default(Matrix4x4);
+                lod.m_meshScales[i] = Vector4.zero;
+                lod.m_centerPositions[i] = Vector4.zero;
+                lod.m_sideScales[i] = Vector4.zero;
+                lod.m_objectIndices[i] = Vector4.zero;
+                lod.m_meshLocations[i] = cameraInfo.m_forward * -100000f;
+            }
+            materialBlock.SetMatrixArray(instance.ID_LeftMatrices, lod.m_leftMatrices);
+            materialBlock.SetMatrixArray(instance.ID_LeftMatricesB, lod.m_leftMatricesB);
+            materialBlock.SetMatrixArray(instance.ID_RightMatrices, lod.m_rightMatrices);
+            materialBlock.SetMatrixArray(instance.ID_RightMatricesB, lod.m_rightMatricesB);
+            materialBlock.SetVectorArray(instance.ID_MeshScales, lod.m_meshScales);
+            materialBlock.SetVectorArray(instance.ID_CenterPositions, lod.m_centerPositions);
+            materialBlock.SetVectorArray(instance.ID_SideScales, lod.m_sideScales);
+            materialBlock.SetVectorArray(instance.ID_ObjectIndices, lod.m_objectIndices);
+            materialBlock.SetVectorArray(instance.ID_MeshLocations, lod.m_meshLocations);
+            if (lod.m_surfaceTexA != null) {
+                materialBlock.SetTexture(instance.ID_SurfaceTexA, lod.m_surfaceTexA);
+                materialBlock.SetTexture(instance.ID_SurfaceTexB, lod.m_surfaceTexB);
+                materialBlock.SetVector(instance.ID_SurfaceMapping, lod.m_surfaceMapping);
+                lod.m_surfaceTexA = null;
+                lod.m_surfaceTexB = null;
+            }
+            if (mesh != null) {
+                Bounds bounds = default(Bounds);
+                bounds.SetMinMax(lod.m_lodMin - new Vector3(100f, 100f, 100f), lod.m_lodMax + new Vector3(100f, 100f, 100f));
+                mesh.bounds = bounds;
+                lod.m_lodMin = new Vector3(100000f, 100000f, 100000f);
+                lod.m_lodMax = new Vector3(-100000f, -100000f, -100000f);
+                NetManager netManager = instance;
+                netManager.m_drawCallData.m_lodCalls = netManager.m_drawCallData.m_lodCalls + 1;
+                NetManager netManager2 = instance;
+                netManager2.m_drawCallData.m_batchedCalls = netManager2.m_drawCallData.m_batchedCalls + (lod.m_lodCount - 1);
+                Graphics.DrawMesh(mesh, Matrix4x4.identity, lod.m_material, lod.m_key.m_layer, null, 0, materialBlock);
+            }
+            lod.m_lodCount = 0;
+        }
     }
-
-
 }

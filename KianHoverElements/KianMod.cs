@@ -34,6 +34,7 @@ namespace Kian.Mod
             base.OnCreated(loading);
             Hook.Create();
             Hook.HookAll();
+            Utils.TextureUtils.SetAllLodDistances();
         }
 
         public override void OnReleased() {

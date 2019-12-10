@@ -3,15 +3,19 @@ using ColossalFramework;
 using UnityEngine;
 using System.IO;
 using System.Collections.Generic;
+using System.Linq;
+using System;
 
 namespace Kian.Utils {
     public static class TextureUtils {
         //Texture flipping script from https://gist.github.com/Cgameworld/f22cfe649a222faf8226e1d65a0782e1
         public static void FlipRoadNodeTextures() {
             string road = "Basic Road";
-            var nodeMaterial = PrefabCollection<NetInfo>.FindLoaded(road).m_nodes[0].m_nodeMaterial;
+            var node = PrefabCollection<NetInfo>.FindLoaded(road).m_nodes[0];
+            var nodeMaterial = node.m_nodeMaterial;
             Flip(nodeMaterial, "_MainTex");
             //Flip(nodeMaterial, "_APRMap");
+
         }
 
         public static void Flip(Material material, string name) {
@@ -25,29 +29,74 @@ namespace Kian.Utils {
             material.SetTexture(name, newTexture);
         }
 
+        public static void Clean(Material material) {
+            Texture2D newTexture = new Texture2D(1, 1);
+            newTexture.anisoLevel = 16;
+
+            //float luminance = 24f / 255f;
+            Color color = Median(material);
+            newTexture.SetPixel(0, 0, color);
+
+            newTexture.Apply();
+            newTexture.Compress(true);
+            material.SetTexture("_MainTex", newTexture);
+        }
+
+        static Color Median(Material material) {
+            var nodeTextureMain = material.GetTexture("_MainTex") as Texture2D;
+            byte[] bytes = nodeTextureMain.MakeReadable().EncodeToPNG();
+            Texture2D texture = new Texture2D(1, 1);
+            texture.LoadImage(bytes);
+            texture.anisoLevel = 16;
+            int xN = texture.width;
+            int yN = texture.height;
+            Color[] arColors = new Color[xN*yN];
+            Debug.Log("Begin calculateing median");
+
+            for (int i = 0; i < xN; i++) {
+                for (int j = 0; j < yN; j++) {
+                    int idx = i * yN + yN;
+                    arColors[idx] = texture.GetPixel(i,j);
+                }
+            }
+            Debug.Log("Begin calculateing median");
+
+            float Luminance(Color c) => (0.299f * c.r + 0.587f * c.g + 0.114f * c.b);
+            int Sign(Color a, Color b) => Math.Sign(Luminance(a) - Luminance(b));
+            Array.Sort(arColors, (a, b) => Sign(a, b) );
+
+            return arColors[arColors.Length/2];
+        }
+
 
         //Texture flipping script from https://stackoverflow.com/questions/35950660/unity-180-rotation-for-a-texture2d-or-maybe-flip-both
-        static Texture2D FlipTexture(Texture2D original, bool upSideDown = true) {
+        static Texture2D FlipTexture(Texture2D original) {
             Texture2D flipped = new Texture2D(original.width, original.height);
 
             int xN = original.width;
             int yN = original.height;
-
-
             for (int i = 0; i < xN; i++) {
                 for (int j = 0; j < yN; j++) {
-                    if (upSideDown) {
-                        flipped.SetPixel(j, xN - i - 1, original.GetPixel(j, i));
-                    } else {
-                        flipped.SetPixel(xN - i - 1, j, original.GetPixel(i, j));
-                    }
+                    flipped.SetPixel(j, xN - i - 1, original.GetPixel(j, i)); // flip upside down
                 }
             }
-            flipped.Apply();
 
+            flipped.Apply();
             return flipped;
         }
 
+        internal static void SetAllLodDistances() {
+            foreach (NetInfo prefab in from p in Resources.FindObjectsOfTypeAll<NetInfo>()
+                                       where p != null
+                                       select p) {
+                foreach (NetInfo.Segment segment in prefab.m_segments) {
+                    segment.m_lodRenderDistance = 100000f;
+                }
+                foreach (NetInfo.Node node in prefab.m_nodes) {
+                    node.m_lodRenderDistance = float.MaxValue;
+                }
+            }
+        }
     }
 
 
@@ -101,16 +150,8 @@ namespace Kian.Utils {
             }
         }
 
-        //Texture flipping script from https://gist.github.com/Cgameworld/f22cfe649a222faf8226e1d65a0782e1
-        public static void FlipRoadNodeTextures() {
-            string[] roads = { "Basic Road", "Large Road Decoration Grass", "Large Oneway Decoration Grass" };
+        //foreach (NetInfo netInfo in Resources.FindObjectsOfTypeAll<NetInfo>())
 
-            for (int i = 0; i < roads.Length; i++) {
-                var nodeMaterial = PrefabCollection<NetInfo>.FindLoaded(roads[i]).m_nodes[0].m_nodeMaterial;
-                TextureUtils.Flip(nodeMaterial, "_MainTex");
-                //Flip(nodeMaterial, "_APRMap");
-            }
-        }
     }
 
 

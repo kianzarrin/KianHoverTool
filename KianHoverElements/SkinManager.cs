@@ -36,7 +36,7 @@ namespace Kian.Skins
                 Crosswalks[idx] = true;
             }
 
-            Debug.Log($"crosswalks color toggled. {segmentID} + {bStart} = {idx}. new value =  {Crosswalks[idx]}");
+            Debug.Log($"crosswalks color toggled. {segmentID}*2 + {bStart} = {idx}. new value =  {Crosswalks[idx]}");
         }
 
         public static bool HasCrossingBan(ushort segmentID, ushort nodeID) {
