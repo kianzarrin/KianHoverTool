@@ -103,7 +103,7 @@ namespace Kian.HoverTool {
 
         }
 
-        private float FindHoveredSegment() {
+        private void FindHoveredSegment() {
             var segmentInput = new RaycastInput(m_mouseRay, m_mouseRayLength) {
                 m_netService = {
                         // find road segments
@@ -166,7 +166,9 @@ namespace Kian.HoverTool {
             }
         }
 
-
+        /// <summary>
+        /// returns the node segment that is closest to the mouse pointer based on angle.
+        /// </summary>
         internal ushort GetHoveredSegmentFromNode() {
             bool considerSegmentLenght = true;
             ushort minSegId = 0;
@@ -178,13 +180,9 @@ namespace Kian.HoverTool {
                 if (segmentId == 0)
                     continue;
                 NetSegment segment = segmentId.ToSegment();
-                Vector3 dir;
-                if (segment.m_startNode == HoveredNodeId) {
-                    dir = segment.m_startDirection;
-
-                } else {
-                    dir = segment.m_endDirection;
-                }
+                Vector3 dir = segment.m_startNode == HoveredNodeId ?
+                    segment.m_startDirection :
+                    segment.m_endDirection;
                 float angle = GetAgnele(-dir, dir0);
                 if (considerSegmentLenght)
                     angle *= segment.m_averageLength;
@@ -196,9 +194,14 @@ namespace Kian.HoverTool {
             return minSegId;
         }
 
-        static float GetAgnele(Vector3 v1, Vector3 v2) {
-            float ret = Vector3.Angle(v1, v2);
-            if (ret > 180) ret -= 180; //future proofing
+        /// <summary>
+        /// returns the angle between v1 and v2.
+        /// input order does not matter.
+        /// The return value is between 0 to 180.
+        /// </summary>
+        private static float GetAgnele(Vector3 v1, Vector3 v2) {
+            float ret = Vector3.Angle(v1, v2); // -180 to 180 degree
+            if (ret > 180) ret -= 180; // future proofing.
             ret = Math.Abs(ret);
             return ret;
         }
@@ -211,17 +214,10 @@ namespace Kian.HoverTool {
                 HoveredNodeId = 0;
 
                 FindHoveredNode();
-                if (HoveredNodeId != 0) {
-                    HoveredSegmentId = GetHoveredSegmentFromNode();
-                    if (HoveredSegmentId != 0) {
-                        return true;
-                    }
-                }
 
                 FindHoveredSegment();
                 if (HoveredNodeId <= 0 && HoveredSegmentId > 0) {
-                    // alternative way to get a node hit: check distance to start and end nodes
-                    // of the segment
+                    // alternative way to get a node hit: check distance to start and end nodes of the segment
                     GetHoveredNodeFromSegment();
                 }
 
