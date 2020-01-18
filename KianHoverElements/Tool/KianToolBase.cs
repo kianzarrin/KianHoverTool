@@ -8,46 +8,37 @@ using static Kian.Mod.ShortCuts;
 namespace Kian.HoverTool {
     public abstract class KianToolBase : DefaultTool
     {
-        public bool ToolEnabled = false;
-        public virtual void Release() {
-            if (ToolEnabled)
-                ToggleTool();
-            Destroy(this.gameObject);
+        public bool ToolEnabled => ToolsModifierControl.toolController.CurrentTool == this;
+
+        protected override void OnDestroy() {
+            DisableTool();
+            base.OnDestroy();
         }
 
         protected abstract void OnPrimaryMouseClicked();
         protected abstract void OnSecondaryMouseClicked();
-        public abstract void EnableTool();
 
         public void ToggleTool()
         {
             if (!ToolEnabled)
-            {
-                _EnableTool();
-            }
+                EnableTool();
             else
-            {
-                _DisableTool();
-            }
+                DisableTool();
         }
 
-        private void _EnableTool()
+        private void EnableTool()
         {
-            Debug.Log("EnableTool: called");
+            Log("EnableTool: called");
+            WorldInfoPanel.HideAllWorldInfoPanels();
+            GameAreaInfoPanel.Hide();
             ToolsModifierControl.toolController.CurrentTool = this;
-            ToolEnabled = true;
-            EnableTool();
         }
 
-        private void _DisableTool()
+        private void DisableTool()
         {
-            Debug.Log("DisableTool: called");
-            ToolsModifierControl.toolController.CurrentTool = ToolsModifierControl.GetTool<DefaultTool>();
+            Log("DisableTool: called");
             ToolsModifierControl.SetTool<DefaultTool>();
-            ToolEnabled = false;
         }
-
-
 
         protected override void OnToolUpdate()
         {
@@ -155,9 +146,9 @@ namespace Kian.HoverTool {
             ushort minSegId = 0;
             if (HoveredNodeId != 0) {
                 NetNode node = HoveredNodeId.ToNode();
-                //TODO does this actually find the mouse direction vector?
-                Vector3 dir0 = m_mouseRay.origin - node.m_position;
+                Vector3 dir0 = node.m_position - m_mousePosition;//TODO does this actually find the mouse direction vector?
                 float min_angle = float.MaxValue;
+                string m = "HoveredNodeId:" + HoveredNodeId +"\n";
                 for (int i = 0; i < 8; ++i) {
                     ushort segmentId = node.GetSegment(i);
                     if (segmentId == 0)
@@ -176,12 +167,14 @@ namespace Kian.HoverTool {
                         min_angle = angle;
                         minSegId = segmentId;
                     }
-
-                    string m = $"m_mouseRay.origin:{m_mouseRay.origin} - node.m_position:{node.m_position} = dir0:{dir0}\n";
-                    m += $"segment:{segmentId} dir:{dir} angle({dir0},{dir})={angle}";
-                    Debug.Log(m);
-                    Debug.Log($"{dir.x} {dir.y} {dir.z}");
+                    dir.y = dir0.y = 0;
+                    dir.Normalize();
+                    dir0.Normalize();
+                    m += $"m_mousePosition:{m_mousePosition} - node.m_position:{node.m_position} = dir0:{dir0.ToString("00.000")}\n";
+                    m += $"segment:{segmentId} dir:{dir.ToString("00.000")} angle({dir0},{dir})={angle}";
+                    m += $"\n{segmentId}: {segment.m_startDirection} {segment.m_endDirection}\n";
                 }
+                LogWait(m);
             }
             return minSegId;
         }

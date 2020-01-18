@@ -4,7 +4,7 @@ using UnityEngine;
 using System;
 
 using Kian.HoverTool;
-
+using System.Diagnostics;
 
 namespace Kian.Mod
 {
@@ -12,41 +12,69 @@ namespace Kian.Mod
         public string Name => "Kian better hover";
         public string Description => "kian hovering tool that is clever about node to segment hovering";
 
-        public void OnEnable() {
+        public void OnEnabled() {
+            System.IO.File.WriteAllText("mod.debug.log", ""); //clear file
+            ShortCuts.Log("IUserMod.OnEnabled");
+
             if (ShortCuts.InGame)
                 LoadTool.Load();
         }
-        public void OnDisable() {
+
+        public void OnDisabled() {
+            ShortCuts.Log("IUserMod.OnDisabled");
             LoadTool.Release();
         }
     }
 
     public static class LoadTool {
-        public static KianTool tool;
         public static void Load() {
-            Release();
-            tool = new KianTool();
+            KianTool.Create();
+            ShortCuts.Log("LoadTool:Created kian tool.");
         }
         public static void Release() {
-            tool?.Release();
-            tool = null;
+            KianTool.Remove();
+            ShortCuts.Log("LoadTool:Removed kian tool.");
         }
     }
 
     public class LoadingExtention : LoadingExtensionBase {
 
         public override void OnLevelLoaded(LoadMode mode) {
+            ShortCuts.Log("LoadingExtention.OnLevelLoaded");
             if (mode == LoadMode.LoadGame || mode == LoadMode.NewGame)
                 LoadTool.Load();
         }
+
         public override void OnLevelUnloading() {
+            ShortCuts.Log("LoadingExtention.OnLevelUnloading");
             LoadTool.Release();
         }
     }
+
     public static class ShortCuts {
         internal static ref NetNode ToNode(this ushort ID) => ref Singleton<NetManager>.instance.m_nodes.m_buffer[ID];
         internal static ref NetSegment ToSegment(this ushort ID) => ref Singleton<NetManager>.instance.m_segments.m_buffer[ID];
         internal static NetManager netMan => Singleton<NetManager>.instance;
+
+        internal static void Log(string m) {
+            //var st = System.Environment.StackTrace;
+            //m  = st + " : \n" + m;
+            UnityEngine.Debug.Log(m);
+            System.IO.File.AppendAllText("mod.debug.log", m + "\n\n");
+        }
+
+        static Stopwatch ticks = null;
+        internal static void LogWait(string m) {
+            if (ticks == null) {
+                Log(m);
+                ticks = Stopwatch.StartNew();
+            }
+            else if (ticks.Elapsed.TotalSeconds > .5) {
+                Log(m);
+                ticks.Reset();
+                ticks.Start();
+            }
+        }
 
 
         internal static AppMode currentMode => SimulationManager.instance.m_ManagersWrapper.loading.currentMode;

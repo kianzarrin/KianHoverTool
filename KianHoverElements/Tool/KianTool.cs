@@ -8,35 +8,48 @@ namespace Kian.HoverTool {
     public sealed class KianTool : KianToolBase {
         ToolButton button;
         public KianTool() : base() {
+            Log("KianTool.CTOR()");
             var uiView = UIView.GetAView();
             button = (ToolButton)uiView.AddUIComponent(typeof(ToolButton));
             button.eventClicked += (_, __) => {
-                Debug.Log("Button pressed");
+                Log("Button pressed");
                 ToggleTool();
             };
+        }
 
-            Debug.Log("Initializing Kian Tool...");
+        public static KianTool Create() {
+            Log("KianTool.Create()");
             GameObject toolModControl = ToolsModifierControl.toolController.gameObject;
             var tool = toolModControl.GetComponent<KianTool>() ?? toolModControl.AddComponent<KianTool>();
+            return tool;
         }
 
-        public override void Release() {
-            Destroy(button.gameObject);
-            base.Release();
+        public static void Remove() {
+            Log("KianTool.Remove()");
+            GameObject toolModControl = ToolsModifierControl.toolController?.gameObject;
+            var tool = toolModControl?.GetComponent<KianTool>();
+            if (tool != null)
+                Destroy(tool);
         }
 
+        protected override void OnDestroy() {
+            Log("KianTool.OnDestroy()");
+            Destroy(button);
+            base.OnDestroy();
+        }
 
-        public override void EnableTool() => ToolsModifierControl.SetTool<KianTool>();
+        //public override void EnableTool() => ToolsModifierControl.SetTool<KianTool>();
 
         protected override void OnEnable() {
-            Debug.Log("OnEnable");
+            Log("KianTool.OnEnable");
             base.OnEnable();
             button.Focus();
         }
+
         protected override void OnDisable() {
-            Debug.Log("OnDisable");
-            base.OnDisable();
+            Log("KianTool.OnDisable");
             button.Unfocus();
+            base.OnDisable();
         }
 
         public override void RenderOverlay(RenderManager.CameraInfo cameraInfo) {
@@ -52,7 +65,7 @@ namespace Kian.HoverTool {
         }
 
         protected override void OnPrimaryMouseClicked() {
-            Debug.Log($"OnPrimaryMouseClicked: segment {HoveredSegmentId} node {HoveredNodeId}");
+            Log($"OnPrimaryMouseClicked: segment {HoveredSegmentId} node {HoveredNodeId}");
             if(HoveredSegmentId == 0) {
                 return;
             }
