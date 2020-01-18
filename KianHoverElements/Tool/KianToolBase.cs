@@ -141,14 +141,20 @@ namespace Kian.HoverTool {
             return HoveredNodeId != 0 || HoveredSegmentId != 0;
         }
 
+        static float GetAgnele(Vector3 v1, Vector3 v2) {
+            float ret = Vector3.Angle(v1, v2);
+            if (ret > 180) ret -= 180; //future proofing
+            ret = Math.Abs(ret);
+            return ret;
+        }
 
         internal ushort GetSegmentFromNode() {
+            bool considerSegmentLenght = true;
             ushort minSegId = 0;
             if (HoveredNodeId != 0) {
                 NetNode node = HoveredNodeId.ToNode();
-                Vector3 dir0 = node.m_position - m_mousePosition;//TODO does this actually find the mouse direction vector?
+                Vector3 dir0 = node.m_position - m_mousePosition;
                 float min_angle = float.MaxValue;
-                string m = "HoveredNodeId:" + HoveredNodeId +"\n";
                 for (int i = 0; i < 8; ++i) {
                     ushort segmentId = node.GetSegment(i);
                     if (segmentId == 0)
@@ -161,22 +167,14 @@ namespace Kian.HoverTool {
                     } else {
                         dir = segment.m_endDirection;
                     }
-                    dir = -dir;
-                    dir.y = dir0.y = 0;
-                    dir.Normalize();
-                    dir0.Normalize();
-
-                    float angle = Vector3.AngleBetween(dir,dir0);
-                    if (angle < 0) angle = -angle; //angle += (float)(2 * Math.PI);
+                    float angle = GetAgnele(-dir,dir0);
+                    if(considerSegmentLenght)
+                        angle *= segment.m_averageLength;
                     if (angle < min_angle) {
                         min_angle = angle;
                         minSegId = segmentId;
                     }
-                    m += $"m_mousePosition:{m_mousePosition} - node.m_position:{node.m_position} = dir0:{dir0.ToString("00.000")}\n";
-                    m += $"segment:{segmentId} dir:{dir.ToString("00.000")} angle({dir0},{dir})={angle}";
-                    m += $"\n{segmentId}: {segment.m_startDirection} {segment.m_endDirection}\n";
                 }
-                LogWait(m);
             }
             return minSegId;
         }
