@@ -114,11 +114,11 @@ namespace Kian.HoverTool {
             {
                 // alternative way to get a node hit: check distance to start and end nodes
                 // of the segment
-                ushort startNodeId = Segment(HoveredSegmentId).m_startNode;
-                ushort endNodeId = Segment(HoveredSegmentId).m_endNode;
+                ushort startNodeId = HoveredSegmentId.ToSegment().m_startNode;
+                ushort endNodeId = HoveredSegmentId.ToSegment().m_endNode;
 
-                var vStart = segmentOutput.m_hitPos - Node(startNodeId).m_position;
-                var vEnd = segmentOutput.m_hitPos - Node(endNodeId).m_position;
+                var vStart = segmentOutput.m_hitPos - startNodeId.ToNode().m_position;
+                var vEnd = segmentOutput.m_hitPos - endNodeId.ToNode().m_position;
 
                 float startDist = vStart.magnitude;
                 float endDist = vEnd.magnitude;

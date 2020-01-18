@@ -15,7 +15,7 @@ namespace Kian.HoverTool {
                 ToggleTool();
             };
 
-            Debug.Log("Initializing traffic Kian Tool...");
+            Debug.Log("Initializing Kian Tool...");
             GameObject toolModControl = ToolsModifierControl.toolController.gameObject;
             var tool = toolModControl.GetComponent<KianTool>() ?? toolModControl.AddComponent<KianTool>();
         }
