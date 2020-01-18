@@ -156,20 +156,22 @@ namespace Kian.HoverTool {
                     NetSegment segment = segmentId.ToSegment();
                     Vector3 dir;
                     if (segment.m_startNode == HoveredNodeId) {
-                        dir = -segment.m_startDirection;
+                        dir = segment.m_startDirection;
 
                     } else {
                         dir = segment.m_endDirection;
                     }
-                    float angle = Vector3.AngleBetween(dir0, dir);
-                    if (angle < 0) angle += (float)(2 * Math.PI);
+                    dir = -dir;
+                    dir.y = dir0.y = 0;
+                    dir.Normalize();
+                    dir0.Normalize();
+
+                    float angle = Vector3.AngleBetween(dir,dir0);
+                    if (angle < 0) angle = -angle; //angle += (float)(2 * Math.PI);
                     if (angle < min_angle) {
                         min_angle = angle;
                         minSegId = segmentId;
                     }
-                    dir.y = dir0.y = 0;
-                    dir.Normalize();
-                    dir0.Normalize();
                     m += $"m_mousePosition:{m_mousePosition} - node.m_position:{node.m_position} = dir0:{dir0.ToString("00.000")}\n";
                     m += $"segment:{segmentId} dir:{dir.ToString("00.000")} angle({dir0},{dir})={angle}";
                     m += $"\n{segmentId}: {segment.m_startDirection} {segment.m_endDirection}\n";
