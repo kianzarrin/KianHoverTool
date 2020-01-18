@@ -1,5 +1,8 @@
+using ColossalFramework;
 using ColossalFramework.UI;
 using UnityEngine;
+using System;
+
 using static Kian.Mod.ShortCuts;
 
 namespace Kian.HoverTool {
@@ -92,6 +95,13 @@ namespace Kian.HoverTool {
                 HoveredNodeId = nodeOutput.m_netNode;
             }
 
+            HoveredSegmentId = GetSegmentFromNode();
+
+            if (HoveredSegmentId != 0) {
+                Debug.Assert(HoveredNodeId != 0, "unexpected: HoveredNodeId == 0");
+                return true;
+            }
+
             // find currently hovered segment
             var segmentInput = new RaycastInput(m_mouseRay, m_mouseRayLength)
             {
@@ -133,6 +143,40 @@ namespace Kian.HoverTool {
                 }
             }
             return HoveredNodeId != 0 || HoveredSegmentId != 0;
+        }
+
+
+        internal ushort GetSegmentFromNode() {
+            ushort minSegId = 0;
+            if (HoveredNodeId != 0) {
+                NetNode node = HoveredNodeId.ToNode();
+                //TODO does this actually find the mouse direction vector?
+                Vector3 dir0 = m_mouseRay.origin - node.m_position;
+                float min_angle = float.MaxValue;
+                for (int i = 0; i < 8; ++i) {
+                    ushort segmentId = node.GetSegment(i);
+                    if (segmentId == 0)
+                        continue;
+                    NetSegment segment = segmentId.ToSegment();
+                    Vector3 dir;
+                    if (segment.m_startNode == HoveredNodeId) {
+                        dir = -segment.m_startDirection;
+
+                    } else {
+                        dir = segment.m_endDirection;
+                    }
+                    float angle = Vector3.AngleBetween(dir0, dir);
+                    if (angle < 0) angle += (float)(2 * Math.PI);
+                    if (angle < min_angle) {
+                        min_angle = angle;
+                        minSegId = segmentId;
+                    }
+                    string m = $"m_mouseRay.origin:{m_mouseRay.origin} - node.m_position:{node.m_position} = dir0:{dir0}\n";
+                    m += $"segment:{segmentId} dir:{dir} angle({dir0},{dir})={angle}";
+                    Debug.Log(m);
+                }
+            }
+            return minSegId;
         }
     }
 }

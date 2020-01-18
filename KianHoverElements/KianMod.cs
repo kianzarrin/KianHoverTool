@@ -8,8 +8,8 @@ using System;
 namespace Kian.Mod
 {
     public class KianModInfo : IUserMod {
-        public string Name => "Kian toggle color";
-        public string Description => "kian hovering tool that toggles a single segmetns color";
+        public string Name => "Kian better hover";
+        public string Description => "kian hovering tool that is clever about node to segment hovering";
     }
 
     public class LoadingExtention : LoadingExtensionBase {
