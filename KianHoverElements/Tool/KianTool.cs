@@ -2,7 +2,6 @@ using ColossalFramework;
 using ColossalFramework.UI;
 using System;
 using UnityEngine;
-using Kian.Patch;
 
 namespace Kian.HoverTool {
     using static Kian.Mod.ShortCuts;
@@ -37,11 +36,11 @@ namespace Kian.HoverTool {
         public override void RenderOverlay(RenderManager.CameraInfo cameraInfo) {
             base.RenderOverlay(cameraInfo);
             if (HoveredSegmentId == 0 || HoveredNodeId == 0) return;
-            NetNode.Flags nodeFlags = Node(HoveredNodeId).m_flags;
+            NetNode.Flags nodeFlags = HoveredNodeId.ToNode().m_flags;
             Color color = GetToolColor(Input.GetMouseButton(0), false);
             NetTool.RenderOverlay(
                 cameraInfo,
-                ref Segment(HoveredSegmentId),
+                ref HoveredSegmentId.ToSegment(),
                 color,
                 color);
         }
@@ -51,30 +50,11 @@ namespace Kian.HoverTool {
             if(HoveredSegmentId == 0) {
                 return;
             }
-            Hook.HookAll();
-
-
-            SkinManager.Toggle(HoveredSegmentId);
-
-            //var seg = Segment(HoveredSegmentId);
-            //Type t = seg.Info.m_netAI.GetType();
-            //Debug.Log($"netAI type is {t}");
-            //Color color = seg.Info.m_netAI.GetColor(HoveredSegmentId, ref seg, InfoManager.InfoMode.None);
-            //Debug.Log($"get color returned {color}");
-
-            //Refersh();
-            RefreshSegment(HoveredSegmentId);
-
         }
 
         protected override void OnSecondaryMouseClicked() {
             throw new System.NotImplementedException();
         }
 
-        public void RefreshSegment(ushort ID) => Singleton<NetManager>.instance.UpdateSegmentColors(ID);
-        public void Refersh() {
-            Singleton<NetManager>.instance.UpdateSegmentColors();
-            Singleton<NetManager>.instance.UpdateNodeColors();
-        }
     } //end class
 }

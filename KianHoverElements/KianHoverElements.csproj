@@ -68,9 +68,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="SkinManager.cs" />
-    <Compile Include="Patch\RedirectionHelper.cs" />
-    <Compile Include="Patch\Hook.cs" />
     <Compile Include="Tool\KianTool.cs" />
     <Compile Include="KianMod.cs" />
     <Compile Include="Tool\ToolButton.cs" />
