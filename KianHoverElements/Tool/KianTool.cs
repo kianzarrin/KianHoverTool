@@ -20,6 +20,12 @@ namespace Kian.HoverTool {
             var tool = toolModControl.GetComponent<KianTool>() ?? toolModControl.AddComponent<KianTool>();
         }
 
+        public override void Release() {
+            Destroy(button.gameObject);
+            base.Release();
+        }
+
+
         public override void EnableTool() => ToolsModifierControl.SetTool<KianTool>();
 
         protected override void OnEnable() {

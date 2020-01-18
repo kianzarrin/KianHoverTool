@@ -9,6 +9,11 @@ namespace Kian.HoverTool {
     public abstract class KianToolBase : DefaultTool
     {
         public bool ToolEnabled = false;
+        public virtual void Release() {
+            if (ToolEnabled)
+                ToggleTool();
+            Destroy(this.gameObject);
+        }
 
         protected abstract void OnPrimaryMouseClicked();
         protected abstract void OnSecondaryMouseClicked();
@@ -171,9 +176,11 @@ namespace Kian.HoverTool {
                         min_angle = angle;
                         minSegId = segmentId;
                     }
+
                     string m = $"m_mouseRay.origin:{m_mouseRay.origin} - node.m_position:{node.m_position} = dir0:{dir0}\n";
                     m += $"segment:{segmentId} dir:{dir} angle({dir0},{dir})={angle}";
                     Debug.Log(m);
+                    Debug.Log($"{dir.x} {dir.y} {dir.z}");
                 }
             }
             return minSegId;
