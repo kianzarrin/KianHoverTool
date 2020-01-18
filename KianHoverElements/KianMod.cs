@@ -19,14 +19,14 @@ namespace Kian.Mod
             base.OnLevelLoaded(mode);
             Debug.Log("OnLevelLoaded kian mod");
             GameObject toolModControl = ToolsModifierControl.toolController.gameObject;
-            toolModControl.AddComponent<KianTool>();
+            //toolModControl.AddComponent<KianTool>();
         }
         public override void OnLevelUnloading() {
             Debug.Log("OnLevelUnloading kian mod");
             base.OnLevelUnloading();
             GameObject toolModControl = ToolsModifierControl.toolController.gameObject;
-            var tool = toolModControl.GetComponent<KianTool>();
-            GameObject.DestroyObject(tool, 10);
+            //var tool = toolModControl.GetComponent<KianTool>();
+            //GameObject.DestroyObject(tool, 10);
             Hook.UnHookAll();
         }
         public override void OnCreated(ILoading loading) {
@@ -34,7 +34,8 @@ namespace Kian.Mod
             base.OnCreated(loading);
             Hook.Create();
             Hook.HookAll();
-            Utils.TextureUtils.SetAllLodDistances();
+            //Utils.TextureUtils.SetAllLodDistances();
+            Utils.TMPEUTILS.FindTMPE();
         }
 
         public override void OnReleased() {
@@ -42,5 +43,6 @@ namespace Kian.Mod
             Hook.Release();
             base.OnReleased();
         }
+
     }
 } // end namesapce

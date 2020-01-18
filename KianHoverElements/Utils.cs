@@ -5,8 +5,36 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using ColossalFramework.Plugins;
+using static Kian.Utils.ShortCuts;
 
 namespace Kian.Utils {
+    public static class TMPEUTILS {
+        public static bool tmpeDetected = false;
+        public static readonly UInt64[] TMPE_IDs = { 583429740, 1637663252, 1806963141 };
+
+        // called when level loading begins
+        public static void FindTMPE() {
+            tmpeDetected = false;
+            foreach (PluginManager.PluginInfo current in PluginManager.instance.GetPluginsInfo()) {
+                if (!tmpeDetected && current.isEnabled && (current.name.Contains("TrafficManager") || TMPE_IDs.Contains(current.publishedFileID.AsUInt64))) {
+                    tmpeDetected = true;
+                }
+            }
+            if (tmpeDetected) Debug.Log("Found TMPE!");
+        }
+
+        public static bool HasCrossingBan(ushort segmentID, ushort nodeID) {
+            if (!tmpeDetected)
+                return true;
+            bool bStartNode = nodeID == Segment(segmentID).m_startNode;
+            CSUtil.Commons.TernaryBool b = TrafficManager.Manager.Impl.JunctionRestrictionsManager.Instance.GetPedestrianCrossingAllowed(segmentID, bStartNode);
+            return b == CSUtil.Commons.TernaryBool.False;
+        }
+
+    }
+
+
     public static class TextureUtils {
         //Texture flipping script from https://gist.github.com/Cgameworld/f22cfe649a222faf8226e1d65a0782e1
         public static void FlipRoadNodeTextures() {
