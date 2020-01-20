@@ -68,11 +68,16 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Tool\KianTool.cs" />
+    <Compile Include="ShapeManager.cs" />
+    <Compile Include="Tool\PedBridgeTool.cs" />
     <Compile Include="KianMod.cs" />
     <Compile Include="Tool\ToolButton.cs" />
     <Compile Include="Tool\KianToolBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utils\Helpers.cs" />
+    <Compile Include="Utils\NetCreation.cs" />
+    <Compile Include="Utils\PosUtils.cs" />
+    <Compile Include="Utils\VecetorUtils.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

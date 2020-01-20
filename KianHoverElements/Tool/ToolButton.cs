@@ -2,7 +2,7 @@ using ColossalFramework.UI;
 using UnityEngine;
 using ColossalFramework;
 
-namespace Kian.HoverTool
+namespace PedBridge.HoverTool
 {
     public class ToolButton : UIButton
     {
