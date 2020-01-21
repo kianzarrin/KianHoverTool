@@ -15,7 +15,7 @@ namespace PedBridge.Utils {
             int count = PrefabCollection<NetInfo>.LoadedCount();
             for(uint i = 0; i < count; ++i) {
                 NetInfo info = PrefabCollection<NetInfo>.GetLoaded(i);
-                if (info is PedestrianBridgeAI)
+                if (info.m_netAI is PedestrianBridgeAI)
                     return info;
             }
             return null;
