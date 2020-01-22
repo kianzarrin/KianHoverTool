@@ -33,7 +33,7 @@ namespace PedBridge.HoverTool {
         }
 
         protected override void OnDestroy() {
-            Log("PedBridgeTool.OnDestroy()");
+            Log("PedBridgeTool.OnDestroy()\n" + Environment.StackTrace);
             Destroy(button);
             base.OnDestroy();
         }
@@ -75,14 +75,16 @@ namespace PedBridge.HoverTool {
             return true;
         }
 
-    protected override void OnPrimaryMouseClicked() {
+        protected override void OnPrimaryMouseClicked() {
             Log($"OnPrimaryMouseClicked: segment {HoveredSegmentId} node {HoveredNodeId}");
             if (!Condition())
                 return;
-            ShapeManager.CreateJunctionBridge(HoveredNodeId);
+            BuildControler.CreateJunctionBridge(HoveredNodeId);
         }
 
         protected override void OnSecondaryMouseClicked() {
+            //if(HoveredSegmentId!=0)
+            //    Utils.NetService.CopyMove(HoveredSegmentId);
             throw new System.NotImplementedException();
         }
 

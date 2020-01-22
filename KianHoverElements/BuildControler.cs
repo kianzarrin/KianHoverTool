@@ -3,8 +3,8 @@ using System;
 
 namespace PedBridge {
     using Utils;
-    public static class ShapeManager {
-        static float HWpb => NetCreation.PedastrianBridgeInfo().m_halfWidth;
+    public static class BuildControler {
+        static float HWpb => NetService.PedestrianBridgeInfo.m_halfWidth;
 
         public static List<ushort> GetCWSegList(ushort nodeID) {
             NetNode node = nodeID.ToNode();
@@ -30,7 +30,7 @@ namespace PedBridge {
             return segList;
         }
 
-        public static void CreateLBridge(ushort segID1, ushort segID2) {
+        public static ushort CreateLBridge(ushort segID1, ushort segID2) {
             PosUtils.RLR rlr = new PosUtils.RLR {
                 HWpb = HWpb,
                 segID1 = segID1,
@@ -40,21 +40,28 @@ namespace PedBridge {
             ushort nodeID = segID1.ToSegment().GetSharedNode(segID2);
             NetNode node = nodeID.ToNode();
             float h = node.m_position.y;
-            NetCreation.CreateL(rlr.Point1, rlr.PointL, rlr.Point2, h);
+
+            //NetService.LogSegmentDetails(segID1);
+            Helpers.Log($"creating L from segments: {segID1} {segID2}");
+            return NetService.CreateL(rlr.Point1, rlr.PointL, rlr.Point2, h);
         }
 
         public static void CreateJunctionBridge(ushort nodeID) {
+            if (nodeID.ToNode().CountSegments() != 4)
+                throw new NotImplementedException("number of segments is not 4");
             List<ushort> segList = GetCWSegList(nodeID);
             if (segList.Count != 4)
                 throw new Exception($"seglist count is ${segList.Count} expected 4");
-            CreateLBridge(segList[0], segList[1]);
-            CreateLBridge(segList[1], segList[2]);
-            CreateLBridge(segList[2], segList[3]);
-            CreateLBridge(segList[3], segList[0]);
+            int n = segList.Count;
+            var nodeList = new List<ushort>();
+            for (int i = 0; i < n; ++i) {
+                ushort newNodeID = CreateLBridge(segList[i], segList[(i + 1) % n]);
+                nodeList.Add(newNodeID);
+            }
+            for (int i = 0; i < n; ++i) {
+                NetService.CreateSegment(nodeList[i], nodeList[(i + 1) % n]);
+            } // end for
+        } // end method
 
-            //TODO connect nodes.
-
-        }
-    }
-
-}
+    } // end calss
+} // end namespace

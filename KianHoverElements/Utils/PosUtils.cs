@@ -10,7 +10,7 @@ namespace PedBridge.Utils {
         const float epsilon = 0.01f;
         const float MPU = 8f; //meter per unit
 
-        static bool Equal(float a, float b) => Mathf.Abs(a - b) < epsilon;
+        static bool Equal(float a, float b) => Mathf.Abs(a - b) < epsilon*2f;
         static void AssertEqual(float a, float b, string m = "") =>
             Debug.Assert(Equal(a, b), $"Assertion failed: expected {a} == {b} | " + m);
 
@@ -46,6 +46,7 @@ namespace PedBridge.Utils {
             Vector2 dir1, dir2;
             ushort junctionID;
             NetNode junction;
+            Vector2 origin;
 
             void PreCalc() {
                 seg1 = segID1.ToSegment();
@@ -54,19 +55,24 @@ namespace PedBridge.Utils {
                 HW2 = seg2.Info.m_halfWidth;
                 junctionID = seg1.GetSharedNode(segID2);
                 junction = junctionID.ToNode();
+                origin = junction.m_position.ToPoint();
                 bStartNode1 = seg1.m_startNode == junctionID;
                 bStartNode2 = seg2.m_startNode == junctionID;
-                V1 = (bStartNode1 ? seg1.m_startDirection : seg1.m_endDirection).ToVector2();
-                V2 = (bStartNode2 ? seg2.m_startDirection : seg2.m_endDirection).ToVector2();
+                V1 = (bStartNode1 ? seg1.m_startDirection : seg1.m_endDirection).ToPoint();
+                V2 = (bStartNode2 ? seg2.m_startDirection : seg2.m_endDirection).ToPoint();
                 dir1 = V1.normalized;
                 dir2 = V2.normalized;
             }
 
             public void Calculate() {
                 PreCalc();
-                PointL = HW2 * dir1 + HW1 * dir2;
+                PointL = (HW2+ HWpb+epsilon) * dir1 + (HW1+HWpb+epsilon) * dir2;
                 Point1 = PointL + 3 * MPU * dir1;
                 Point2 = PointL + 3 * MPU * dir2;
+
+                PointL += origin;
+                Point1 += origin;
+                Point2 += origin;
             }
         }
     }

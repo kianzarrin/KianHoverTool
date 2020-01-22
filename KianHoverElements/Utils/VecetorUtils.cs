@@ -29,7 +29,8 @@ namespace PedBridge.Utils {
         }
         /// returns rotated vector counter clockwise
         ///
-        public static Vector3 ToVector3(this Vector2 v, float h = 0) => new Vector3(v.x, h, v.y);
-        public static Vector2 ToVector2(this Vector3 v) => new Vector2(v.x, v.z);
+        public static Vector3 ToPos(this Vector2 v2, float h = 0) => new Vector3(v2.x, h, v2.y);
+        public static Vector2 ToPoint(this Vector3 v3) => new Vector2(v3.x, v3.z);
+        public static float Height(this Vector3 v3) => v3.y;
     }
 }
