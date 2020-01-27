@@ -5,6 +5,8 @@ using System.Text;
 using ICities;
 using ColossalFramework;
 using UnityEngine;
+using System.Diagnostics;
+using System.Timers;
 
 namespace PedBridge.Utils {
     public static class NetService {
@@ -28,7 +30,6 @@ namespace PedBridge.Utils {
             Helpers.Log(m);
         }
 
-
         public static NetInfo _bInfo = null;
         public static NetInfo _pInfo = null;
 
@@ -49,6 +50,11 @@ namespace PedBridge.Utils {
             throw new Exception("NetInfo not found!");
         }
 
+        public class NetServiceException : Exception {
+            public NetServiceException(string m) : base(m) { }
+            public NetServiceException() : base() { }
+            public NetServiceException(string m, Exception e) : base(m, e) { }
+        }
 
         public static ushort CreateNode(Vector3 position, NetInfo info = null) {
             info = info ?? PedestrianBridgeInfo;
@@ -56,7 +62,7 @@ namespace PedBridge.Utils {
             bool res = netMan.CreateNode(node: out ushort nodeID, randomizer: ref simMan.m_randomizer,
                 info: info, position: position, buildIndex: simMan.m_currentBuildIndex);
             if (!res)
-                throw new Exception("Node creation failed");
+                throw new NetServiceException("Node creation failed");
             simMan.m_currentBuildIndex++;
             return nodeID;
 
@@ -65,41 +71,36 @@ namespace PedBridge.Utils {
         public static ushort CreateSegment(
             ushort startNodeID, ushort endNodeID,
             Vector3 startDir, Vector3 endDir,
-            NetInfo info = null)
-        {
+            NetInfo info = null) {
             info = info ?? startNodeID.ToNode().Info;
             Helpers.Log($"creating segment for {info.name} between nodes {startNodeID} {endNodeID}");
             var bi = simMan.m_currentBuildIndex;
+            startDir.y = endDir.y = 0;
+            startDir.Normalize(); endDir.Normalize();
             bool res = netMan.CreateSegment(
                 segment: out ushort segmentID, randomizer: ref simMan.m_randomizer, info: info,
-                startNode: startNodeID, endNode: endNodeID,
-                startDirection: startDir.normalized, endDirection: endDir.normalized,
+                startNode: startNodeID, endNode: endNodeID, startDirection: startDir, endDirection: endDir,
                 buildIndex: bi, modifiedIndex: bi, invert: false);
             if (!res)
-                throw new Exception("Segment creation failed");
+                throw new NetServiceException("Segment creation failed");
             simMan.m_currentBuildIndex++;
             return segmentID;
         }
 
-        public static ushort CreateSegment(ushort startNodeID, ushort endNodeID) {
+        public static ushort CreateSegment(ushort startNodeID, ushort endNodeID, NetInfo info = null) {
             Vector3 startPos = startNodeID.ToNode().m_position;
             Vector3 endPos = endNodeID.ToNode().m_position;
             var dir = endPos - startPos;
-            dir.y = 0;
-            dir.Normalize();
-            return CreateSegment(startNodeID, endNodeID, dir, -dir);
+            return CreateSegment(startNodeID, endNodeID, dir, -dir, info);
         }
 
-        public static ushort CreateSegment(ushort startNodeID, ushort endNodeID, Vector2 middlePoint) {
+        public static ushort CreateSegment(ushort startNodeID, ushort endNodeID, Vector2 middlePoint, NetInfo info = null) {
             Vector3 startPos = startNodeID.ToNode().m_position;
             Vector3 endPos = endNodeID.ToNode().m_position;
             Vector3 middlePos = middlePoint.ToPos();
             Vector3 startDir = middlePos - startPos;
             Vector3 endDir = middlePos - endPos;
-            startDir.y = endDir.y = 0;
-            startDir.Normalize();
-            endDir.Normalize();
-            return CreateSegment(startNodeID, endNodeID,startDir,endDir);
+            return CreateSegment(startNodeID, endNodeID, startDir, endDir);
         }
 
 
@@ -107,30 +108,77 @@ namespace PedBridge.Utils {
             segmentID.ToSegment().GetClosestPosition(Pos).Height();
 
         public static void SetGroundNode(ushort nodeID) {
-            NetNode node = nodeID.ToNode();
+            ref NetNode node = ref nodeID.ToNode();
             node.m_elevation = 0;
             node.m_building = 0;
             node.m_flags &= ~NetNode.Flags.Moveable;
             node.m_flags |= NetNode.Flags.Transition | NetNode.Flags.OnGround;
+            node.UpdateNode(nodeID);
+            netMan.UpdateNode(nodeID);
         }
 
         public static ushort CreateL(Vector2 point1, Vector2 pointL, Vector2 point2, float h) {
             NetInfo info = PedestrianBridgeInfo;
+            NetInfo info2 = PedestrianPathInfo;
+            float hBridge = 10; //TODO 10
+
             Vector3 pos1 = point1.ToPos(h);
             Vector3 pos2 = point2.ToPos(h);
-            Vector3 posL = pointL.ToPos(h + 10);
+            Vector3 posL = pointL.ToPos(h + hBridge);
 
-            ushort nodeIDL = CreateNode(posL);
-            ushort nodeID1 = CreateNode(pos1);
-            ushort nodeID2 = CreateNode(pos2);
-            SetGroundNode(nodeID1);
-            SetGroundNode(nodeID2);
+            ushort nodeIDL = CreateNode(posL, info);
+            ushort nodeID1 = CreateNode(pos1, info);
+            ushort nodeID2 = CreateNode(pos2, info);
+
+            lock (GroundNodes) {
+                GroundNodes.Queue(nodeID1,50);
+                GroundNodes.Queue(nodeID2,50);
+            }
             CreateSegment(nodeIDL, nodeID1);
             CreateSegment(nodeIDL, nodeID2);
-            SetGroundNode(nodeID1);
-            SetGroundNode(nodeID2);
-
             return nodeIDL;
         }
-     }
+
+        class NodeTime {
+            public NodeTime(ushort nodeID, float ms=1) {
+                NodeID = nodeID;
+                ticks = Stopwatch.StartNew();
+                this.ms = ms;
+            }
+            public ushort NodeID;
+            public Stopwatch ticks;
+            public float ms;
+            public bool IsTime => ticks.ElapsedMilliseconds >= ms;
+        }
+
+        class NodeList : List<NodeTime> {
+            public void Queue(ushort nodeID, float ms=1) => Add(new NodeTime(nodeID,ms));
+        }
+        static NodeList GroundNodes = new NodeList();
+
+        public class Threading : ThreadingExtensionBase {
+            public override void OnUpdate(float realTimeDelta, float simulationTimeDelta) {
+                lock (GroundNodes) {
+                    foreach(var item in GroundNodes) {
+                        if (item.IsTime) {
+                            SetGroundNode(item.NodeID);
+                            GroundNodes.Remove(item);
+                        }
+                    }
+                }
+            }
+        }
+
+        public static ushort CopyMove(ushort segmentID) {
+            Helpers.Log("CopyMove");
+            Vector3 move = new Vector3(70, 0, 70);
+            var segment = segmentID.ToSegment();
+            var startPos = segment.m_startNode.ToNode().m_position + move;
+            var endPos = segment.m_endNode.ToNode().m_position + move;
+            NetInfo info = GetInfo("Basic Road");
+            ushort nodeID1 = CreateNode(startPos, info);
+            ushort nodeID2 = CreateNode(endPos, info);
+            return CreateSegment(nodeID1, nodeID2);
+        }
+    }
 }

@@ -54,15 +54,19 @@ namespace PedBridge.HoverTool {
 
         public override void RenderOverlay(RenderManager.CameraInfo cameraInfo) {
             base.RenderOverlay(cameraInfo);
-            if (!Condition())
+            if (HoveredSegmentId == 0 || HoveredNodeId == 0)
                 return;
-            Color color = GetToolColor(Input.GetMouseButton(0), false);
-            //NetTool.RenderOverlay(
-            //    cameraInfo,
-            //    ref HoveredSegmentId.ToSegment(),
-            //    color,
-            //    color);
-            DrawNodeCircle(cameraInfo, HoveredNodeId, color);
+
+            Color color1 = GetToolColor(Input.GetMouseButton(0), false);
+            Color color2 = GetToolColor(Input.GetMouseButton(1), false);
+            if (Condition())
+                DrawNodeCircle(cameraInfo, HoveredNodeId, color1);
+            else
+                NetTool.RenderOverlay(
+                    cameraInfo,
+                    ref HoveredSegmentId.ToSegment(),
+                    color2,
+                    color2);
         }
 
         bool Condition() {
@@ -77,14 +81,16 @@ namespace PedBridge.HoverTool {
 
         protected override void OnPrimaryMouseClicked() {
             Log($"OnPrimaryMouseClicked: segment {HoveredSegmentId} node {HoveredNodeId}");
-            if (!Condition())
+            if (HoveredSegmentId == 0 || HoveredNodeId == 0)
                 return;
-            BuildControler.CreateJunctionBridge(HoveredNodeId);
+            if (Condition()) {
+                BuildControler.CreateJunctionBridge(HoveredNodeId);
+            }else {
+                Utils.NetService.CopyMove(HoveredSegmentId);
+            }
         }
 
         protected override void OnSecondaryMouseClicked() {
-            //if(HoveredSegmentId!=0)
-            //    Utils.NetService.CopyMove(HoveredSegmentId);
             throw new System.NotImplementedException();
         }
 
