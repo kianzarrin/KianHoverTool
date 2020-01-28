@@ -120,7 +120,7 @@ namespace PedBridge.Utils {
         public static ushort CreateL(Vector2 point1, Vector2 pointL, Vector2 point2, float h) {
             NetInfo info = PedestrianBridgeInfo;
             NetInfo info2 = PedestrianPathInfo;
-            float hBridge = 10; //TODO 10
+            float hBridge = 10;
 
             Vector3 pos1 = point1.ToPos(h);
             Vector3 pos2 = point2.ToPos(h);
