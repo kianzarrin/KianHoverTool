@@ -63,16 +63,16 @@ namespace Kian.Mod
             System.IO.File.AppendAllText("mod.debug.log", m + "\n\n");
         }
 
-        static Stopwatch ticks = null;
-        internal static void LogWait(string m) {
-            if (ticks == null) {
+        static Stopwatch[] ticks_array = new Stopwatch[10];
+        internal static void LogWait(string m, int waitID = 0) {
+            if (ticks_array[waitID] == null) {
                 Log(m);
-                ticks = Stopwatch.StartNew();
+                ticks_array[waitID] = Stopwatch.StartNew();
             }
-            else if (ticks.Elapsed.TotalSeconds > .5) {
+            else if (ticks_array[waitID].Elapsed.TotalSeconds > .5) {
                 Log(m);
-                ticks.Reset();
-                ticks.Start();
+                ticks_array[waitID].Reset();
+                ticks_array[waitID].Start();
             }
         }
 
