@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using static Kian.Mod.ShortCuts;
+using static Kian.Utils.NetService;
 
 namespace Kian.HoverTool {
     public abstract class KianToolBase : DefaultTool {
@@ -33,42 +34,15 @@ namespace Kian.HoverTool {
 
         void DebugSeg() {
             if (c1 != null && c2 != null) {
-                ushort nodeID1 = CreateNode((Vector3)c1);
-                ushort nodeID2 = CreateNode((Vector3)c2);
-                CreateSegment(nodeID1, nodeID2);
+                Vector3 c12 = 0.5f * ((Vector3)c1 + (Vector3)c2);
+                ushort nodeID1 = CreateNode((Vector3)c1, PedestrianBridgeInfo);
+                ushort nodeID2 = CreateNode((Vector3)c2, GravelBridgeInfo);
+                ushort nodeID12 = CreateNode(c12, PedestrianBridgeInfo);
+                CreateSegment(nodeID1, nodeID12, PedestrianBridgeInfo); // mouse
+                CreateSegment(nodeID2, nodeID12, GravelBridgeInfo); // hit
             }
-        }
-        public static NetManager netMan => Singleton<NetManager>.instance;
-        public static SimulationManager simMan => Singleton<SimulationManager>.instance;
-        public static NetInfo PedastrianBridgeInfo() {
-            int count = PrefabCollection<NetInfo>.LoadedCount();
-            for (uint i = 0; i < count; ++i) {
-                NetInfo info = PrefabCollection<NetInfo>.GetLoaded(i);
-                if (info.m_netAI is PedestrianBridgeAI)
-                    return info;
-            }
-            return null;
-        }
-        public static ushort CreateNode(Vector3 pos) {
-            NetInfo info = PedastrianBridgeInfo();
-            bool res = netMan.CreateNode(out ushort nodeID, ref simMan.m_randomizer, info, pos, simMan.m_currentBuildIndex);
-            if (res)
-                simMan.m_currentBuildIndex++;
-            return nodeID;
         }
 
-        public static ushort CreateSegment(ushort startNodeID, ushort endNodeID) {
-            Vector3 pos1 = startNodeID.ToNode().m_position;
-            Vector3 pos2 = endNodeID.ToNode().m_position;
-            Vector3 dir = pos2 - pos1;
-            dir.y = 0;
-            NetInfo info = PedastrianBridgeInfo();
-            bool res = netMan.CreateSegment(out ushort segmentID, ref simMan.m_randomizer, info,
-                startNodeID, endNodeID, -dir, dir,
-                simMan.m_currentBuildIndex, simMan.m_currentBuildIndex, false); ;
-            if (res) simMan.m_currentBuildIndex++;
-            return segmentID;
-        }
         public bool drawpoints = false;
         #endregion
 

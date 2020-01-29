@@ -54,8 +54,8 @@ namespace Kian.HoverTool {
 
         public override void RenderOverlay(RenderManager.CameraInfo cameraInfo) {
             base.RenderOverlay(cameraInfo);
-            OnDebugDraw();
-            LogWait($" Application.version = {Application.version} Application.unityVersion = {Application.unityVersion}",4);
+            //OnDebugDraw();
+            //LogWait($" Application.version = {Application.version} Application.unityVersion = {Application.unityVersion}",4);
             if (HoveredSegmentId == 0 || HoveredNodeId == 0) return;
             NetNode.Flags nodeFlags = HoveredNodeId.ToNode().m_flags;
             Color color = GetToolColor(Input.GetMouseButton(0), false);
