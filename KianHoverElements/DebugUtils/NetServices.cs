@@ -120,6 +120,15 @@ namespace Kian.Utils {
             ushort nodeID2 = CreateNode(endPos, info);
             return CreateSegment(nodeID1, nodeID2);
         }
+
+        public static void DebugSeg(Vector3 v1, Vector3 v2) {
+            Vector3 v12 = 0.5f * (v1 + v2);
+            ushort nodeID1 = CreateNode(v1, PedestrianBridgeInfo);
+            ushort nodeID2 = CreateNode(v2, GravelBridgeInfo);
+            ushort nodeID12 = CreateNode(v12, PedestrianBridgeInfo);
+            CreateSegment(nodeID1, nodeID12, PedestrianBridgeInfo); // mouse
+            CreateSegment(nodeID2, nodeID12, GravelBridgeInfo); // hit
+        }
     }
 
     public static class VectorUtils {

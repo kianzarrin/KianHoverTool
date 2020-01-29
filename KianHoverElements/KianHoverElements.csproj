@@ -68,8 +68,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DebugDraw.cs" />
-    <Compile Include="NetServices.cs" />
+    <Compile Include="DebugUtils\DrawTool.cs" />
+    <Compile Include="DebugUtils\DebugDraw.cs" />
+    <Compile Include="DebugUtils\NetServices.cs" />
     <Compile Include="Tool\KianTool.cs" />
     <Compile Include="KianMod.cs" />
     <Compile Include="Tool\ToolButton.cs" />

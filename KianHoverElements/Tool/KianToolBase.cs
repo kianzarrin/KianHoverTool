@@ -8,43 +8,7 @@ using static Kian.Utils.NetService;
 
 namespace Kian.HoverTool {
     public abstract class KianToolBase : DefaultTool {
-        #region DebugDraw
-        public DebugDraw DebugDraw = new DebugDraw();
-        public Vector3? c1;
-        public Vector3? c2;
-        public void OnDebugDraw() {
-            if (c1 != null) {
-                LogWait("Drawing debug sphere :)", 2);
-                DebugDraw.DrawSphere(Vector3.zero, 1, Color.yellow);
-                DebugDraw.DrawSphere(Vector3.zero, 10, Color.yellow);
-                DebugDraw.DrawSphere(Vector3.zero, 100, Color.yellow);
-                DebugDraw.DrawSphere(Vector3.zero, 1000, Color.yellow);
-            }
-            if (c2 != null) {
-                DebugDraw.DrawSphere((Vector3)c2, 10, Color.red);
-            }
-            if (c1 != null && c2 != null) {
-                Vector3 v1 = (Vector3)c1 + new Vector3(10f, 10f, 10f);
-                Vector3 v2 = (Vector3)c2 + new Vector3(10f, 10f, 10f);
-
-                LogWait("Drawing debug line :)", 1);
-                Debug.DrawLine(v1, v2, Color.red, 10);
-            }
-        }
-
-        void DebugSeg() {
-            if (c1 != null && c2 != null) {
-                Vector3 c12 = 0.5f * ((Vector3)c1 + (Vector3)c2);
-                ushort nodeID1 = CreateNode((Vector3)c1, PedestrianBridgeInfo);
-                ushort nodeID2 = CreateNode((Vector3)c2, GravelBridgeInfo);
-                ushort nodeID12 = CreateNode(c12, PedestrianBridgeInfo);
-                CreateSegment(nodeID1, nodeID12, PedestrianBridgeInfo); // mouse
-                CreateSegment(nodeID2, nodeID12, GravelBridgeInfo); // hit
-            }
-        }
-
         public bool drawpoints = false;
-        #endregion
 
         public bool ToolEnabled => ToolsModifierControl.toolController.CurrentTool == this;
 
@@ -237,25 +201,7 @@ namespace Kian.HoverTool {
 
                 if (HoveredNodeId != 0 && HoveredSegmentId != 0)
                 {
-                    ref NetNode node = ref HoveredNodeId.ToNode();
-                    ref NetSegment segment = ref HoveredSegmentId.ToSegment();
-                    ushort otherNodeID = segment.GetOtherNode(HoveredNodeId);
-                    ref NetNode otherNode = ref otherNodeID.ToNode();
-
-                    LogWait($"mouse = ${m_mousePosition.ToString("000.000")}" +
-                        $" hit={segmentOutput.m_hitPos.ToString("000.000")}\n" +
-                        $"node:{node.m_position.ToString("000.000")}" +
-                        $"other node:{otherNode.m_position.ToString("000.000")}",
-                        3
-                        );
-                    if (drawpoints) {
-                        c1 = m_mousePosition;
-                        c2 = segmentOutput.m_hitPos;
-                        DebugSeg();
-                        drawpoints = false;
-                    }
-                    //HoveredSegmentId = GetHoveredSegmentFromNode(segmentOutput.m_hitPos);
-                    //HoveredSegmentId = GetHoveredSegmentFromNode(m_mousePosition);
+                    HoveredSegmentId = GetHoveredSegmentFromNode(segmentOutput.m_hitPos);
                 }
             }
 
@@ -274,9 +220,8 @@ namespace Kian.HoverTool {
                 ushort segmentId = node.GetSegment(i);
                 ref NetSegment segment = ref segmentId.ToSegment();
 
-
                 Vector3 pos = segment.GetClosestPosition(hitPos);
-                float distance = (m_mousePosition - pos).sqrMagnitude;
+                float distance = (hitPos - pos).sqrMagnitude;
                 if (distance < minDistance)
                 {
                     minDistance = distance;
