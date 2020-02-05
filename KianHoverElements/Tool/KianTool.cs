@@ -89,7 +89,7 @@ namespace Kian.HoverTool {
             bool K = Input.GetKeyDown(KeyCode.K);
             //Log($"ctrl = {ctrl} L={L}");
             if (ctrl && L) {
-                Debug.Log("stack is:\n" + Environment.StackTrace);
+                //Debug.Log("stack is:\n" + Environment.StackTrace);
                 GuideWrapper.example2.Activate();
             } else if (ctrl && K) {
                 GuideWrapper.example2.Deactivate();

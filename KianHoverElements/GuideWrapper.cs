@@ -14,9 +14,9 @@ namespace Kian.Util {
         public GuideWrapper(string key) {
             m_guide = new GenericGuide();
             m_info = new GuideInfo {
-                m_delayType = GuideInfo.Delay.OccurrenceCount,
-                m_displayDelay = 1,
-                m_repeatDelay = 1, //3
+                m_delayType = GuideInfo.Delay.OccurrenceCount, // game default: OccurrenceCount
+                m_displayDelay = 1, // game default: 1
+                m_repeatDelay = 3, // game default: 3
                 m_overrideOptions = true,
                 m_icon = "ToolbarIconZoomOutGlobe",
                 m_tag = "Generic", 
