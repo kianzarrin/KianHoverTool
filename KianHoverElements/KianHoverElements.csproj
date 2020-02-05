@@ -68,6 +68,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GuideWrapper.cs" />
     <Compile Include="Tool\KianTool.cs" />
     <Compile Include="KianMod.cs" />
     <Compile Include="Tool\ToolButton.cs" />

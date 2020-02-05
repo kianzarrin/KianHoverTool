@@ -5,6 +5,8 @@ using UnityEngine;
 
 namespace Kian.HoverTool {
     using static Kian.Mod.ShortCuts;
+    using Kian.Util;
+
     public sealed class KianTool : KianToolBase {
         ToolButton button;
         public KianTool() : base() {
@@ -73,6 +75,26 @@ namespace Kian.HoverTool {
 
         protected override void OnSecondaryMouseClicked() {
             throw new System.NotImplementedException();
+        }
+
+        public override void SimulationStep() {
+            base.SimulationStep();
+            HandleGuide();
+        }
+
+
+        void HandleGuide() {
+            bool ctrl = Input.GetKey(KeyCode.LeftControl);
+            bool L = Input.GetKeyDown(KeyCode.L);
+            bool K = Input.GetKeyDown(KeyCode.K);
+            //Log($"ctrl = {ctrl} L={L}");
+            if (ctrl && L) {
+                Debug.Log("stack is:\n" + Environment.StackTrace);
+                GuideWrapper.example2.Activate();
+            } else if (ctrl && K) {
+                GuideWrapper.example2.Deactivate();
+            }
+
         }
 
     } //end class
