@@ -30,9 +30,6 @@ namespace PedBridge.Utils {
             Helpers.Log(m);
         }
 
-        public static NetInfo _bInfo = null;
-        public static NetInfo _pInfo = null;
-
         public static NetInfo PedestrianBridgeInfo =>
             _bInfo = _bInfo ?? GetInfo("Pedestrian Elevated");
 
@@ -49,6 +46,20 @@ namespace PedBridge.Utils {
             }
             throw new Exception("NetInfo not found!");
         }
+
+        public static NetInfo Elevated(this NetInfo info) {
+            NetAI ai = info.m_netAI;
+            if (ai is PedestrianBridgeAI || ai is RoadBridgeAI)
+                return info;
+
+            if (ai is PedestrianPathAI)
+                return (ai as PedestrianPathAI).m_elevatedInfo;
+
+            if (ai is RoadAI)
+                return (ai as RoadAI).m_elevatedInfo;
+            return null;
+        }
+
 
         public class NetServiceException : Exception {
             public NetServiceException(string m) : base(m) { }
@@ -117,22 +128,21 @@ namespace PedBridge.Utils {
             netMan.UpdateNode(nodeID);
         }
 
-        public static ushort CreateL(Vector2 point1, Vector2 pointL, Vector2 point2, float h) {
-            NetInfo info = PedestrianBridgeInfo;
-            NetInfo info2 = PedestrianPathInfo;
+        public static ushort CreateL(Vector2 point1, Vector2 pointL, Vector2 point2, float h, NetInfo info){
+            NetInfo eInfo = info.Elevated();
             float hBridge = 10;
 
-            Vector3 pos1 = point1.ToPos(h);
-            Vector3 pos2 = point2.ToPos(h);
+            Vector3 pos1 = point1.ToPos(h + hBridge);
+            Vector3 pos2 = point2.ToPos(h + hBridge);
             Vector3 posL = pointL.ToPos(h + hBridge);
 
-            ushort nodeIDL = CreateNode(posL, info);
-            ushort nodeID1 = CreateNode(pos1, info);
-            ushort nodeID2 = CreateNode(pos2, info);
+            ushort nodeIDL = CreateNode(posL, eInfo);
+            ushort nodeID1 = CreateNode(pos1, eInfo);
+            ushort nodeID2 = CreateNode(pos2, eInfo);
 
             lock (GroundNodes) {
-                GroundNodes.Queue(nodeID1,50);
-                GroundNodes.Queue(nodeID2,50);
+                //GroundNodes.Queue(nodeID1,50);
+                //GroundNodes.Queue(nodeID2,50);
             }
             CreateSegment(nodeIDL, nodeID1);
             CreateSegment(nodeIDL, nodeID2);

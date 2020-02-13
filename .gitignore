@@ -328,3 +328,8 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+/dependencies/TrafficManager.dll
+/dependencies/RoundaboutBuilder.dll
+/dependencies/FineRoadTool.dll
+/dependencies/CSUtil.Commons.dll
+/dependencies/0Harmony.dll

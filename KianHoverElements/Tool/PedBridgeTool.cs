@@ -84,7 +84,9 @@ namespace PedBridge.HoverTool {
             if (HoveredSegmentId == 0 || HoveredNodeId == 0)
                 return;
             if (Condition()) {
-                BuildControler.CreateJunctionBridge(HoveredNodeId);
+                Singleton<SimulationManager>.instance.AddAction(delegate () {
+                    BuildControler.CreateJunctionBridge(HoveredNodeId);
+                });
             }else {
                 Utils.NetService.CopyMove(HoveredSegmentId);
             }

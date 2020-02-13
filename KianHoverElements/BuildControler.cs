@@ -4,7 +4,9 @@ using System;
 namespace PedBridge {
     using Utils;
     public static class BuildControler {
-        static float HWpb => NetService.PedestrianBridgeInfo.m_halfWidth;
+        static float HWpb => info.Elevated().m_halfWidth;
+        static NetInfo info => NetService.PedestrianPathInfo;
+        static NetInfo info2 => NetService.GetInfo("Basic Road");
 
         public static List<ushort> GetCWSegList(ushort nodeID) {
             NetNode node = nodeID.ToNode();
@@ -43,7 +45,7 @@ namespace PedBridge {
 
             //NetService.LogSegmentDetails(segID1);
             Helpers.Log($"creating L from segments: {segID1} {segID2}");
-            return NetService.CreateL(rlr.Point1, rlr.PointL, rlr.Point2, h);
+            return NetService.CreateL(rlr.Point1, rlr.PointL, rlr.Point2, h, info);
         }
 
         public static void CreateJunctionBridge(ushort nodeID) {
