@@ -29,8 +29,8 @@ namespace PedBridge.HoverTool {
         private void EnableTool()
         {
             Log("EnableTool: called");
-            WorldInfoPanel.HideAllWorldInfoPanels();
-            GameAreaInfoPanel.Hide();
+            //WorldInfoPanel.HideAllWorldInfoPanels();
+            //GameAreaInfoPanel.Hide();
             ToolsModifierControl.toolController.CurrentTool = this;
         }
 

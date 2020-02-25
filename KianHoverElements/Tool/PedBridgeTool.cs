@@ -2,8 +2,10 @@ using ColossalFramework;
 using ColossalFramework.UI;
 using System;
 using UnityEngine;
+using PedBridge.Utils;
 
 namespace PedBridge.HoverTool {
+    using static NetTool;
     using static PedBridge.Utils.Helpers;
     public sealed class PedBridgeTool : KianToolBase {
         ToolButton button;
@@ -95,6 +97,10 @@ namespace PedBridge.HoverTool {
         protected override void OnSecondaryMouseClicked() {
             throw new System.NotImplementedException();
         }
+
+
+
+  
 
     } //end class
 }

@@ -1,7 +1,10 @@
 namespace PedBridge.Utils {
+    using ColossalFramework;
     using System;
+    using static Helpers;
+
     public static class  PrefabUtils {
-        static NetTool netTool => ToolsModifierControl.toolController.CurrentTool as NetTool;
+        static NetTool netTool => Singleton<NetTool>.instance; //ToolsModifierControl.toolController.CurrentTool as NetTool;
 
         public static NetInfo PedestrianBridgeInfo =>
             GetInfo("Pedestrian Elevated");
@@ -20,7 +23,7 @@ namespace PedBridge.Utils {
             throw new Exception("NetInfo not found!");
         }
 
-        public static NetInfo Elevated(this NetInfo info) {
+        public static NetInfo GetElevated(this NetInfo info) {
             NetAI ai = info.m_netAI;
             if (ai is PedestrianBridgeAI || ai is RoadBridgeAI)
                 return info;
@@ -37,6 +40,7 @@ namespace PedBridge.Utils {
 
         public static NetInfo Value {
             get {
+                Log("KIAN DEBUG POINT A");
                 NetInfo prefab = netTool.m_prefab ?? defaultPrefab;
                 if (PluginUtils.FineRoadToolDetected)
                     prefab = FineRoadToolSelection(prefab);
@@ -48,6 +52,7 @@ namespace PedBridge.Utils {
         private static NetInfo FineRoadToolSelection(NetInfo prefab) {
             RoadAI roadAI = prefab.m_netAI as RoadAI;
             if (roadAI != null) {
+                Log($"underground:{roadAI.IsUnderground()} overground:{roadAI.IsOverground()}");
                 // If the user has manually selected underground/overground mode, we let it be
                 if (!roadAI.IsUnderground() && !roadAI.IsOverground()) {
                     switch (FineRoadTool.FineRoadTool.instance.mode) {
@@ -73,6 +78,7 @@ namespace PedBridge.Utils {
 
             PedestrianPathAI pedestrianAI = prefab.m_netAI as PedestrianPathAI;
             if (pedestrianAI != null) {
+                Log($"underground:{pedestrianAI.IsUnderground()} overground:{pedestrianAI.IsOverground()}");
                 // If the user has manually selected underground/overground mode, we let it be
                 if (!pedestrianAI.IsUnderground() && !pedestrianAI.IsOverground()) {
                     switch (FineRoadTool.FineRoadTool.instance.mode) {

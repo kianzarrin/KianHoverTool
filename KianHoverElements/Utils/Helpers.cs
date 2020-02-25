@@ -27,6 +27,10 @@ namespace PedBridge.Utils {
             }
         }
 
+        internal static T LogRet<T>(T obj) {
+            Log(obj.ToString());
+            return obj;
+        }
 
         internal static AppMode currentMode => SimulationManager.instance.m_ManagersWrapper.loading.currentMode;
         internal static bool CheckGameMode(AppMode mode) => CheckGameMode(new[] { mode });

@@ -4,9 +4,9 @@ using System;
 namespace PedBridge {
     using Utils;
     public static class BuildControler {
-        static float HWpb => info.Elevated().m_halfWidth;
-        static NetInfo info => NetService.PedestrianPathInfo;
-        static NetInfo info2 => NetService.GetInfo("Basic Road");
+        //static float HWpb => info.GetElevated().m_halfWidth;
+        static float HWpb => info.m_halfWidth; // TODO use elevated.
+        static NetInfo info => PrefabUtils.Value;
 
         public static List<ushort> GetCWSegList(ushort nodeID) {
             NetNode node = nodeID.ToNode();

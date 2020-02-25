@@ -84,6 +84,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BuildControler.cs" />
+    <Compile Include="Utils\Class1.cs" />
     <Compile Include="Utils\PluginUtils.cs" />
     <Compile Include="Utils\PrefabUtils.cs" />
     <Compile Include="Tool\PedBridgeTool.cs" />

@@ -7,6 +7,7 @@ using ColossalFramework;
 using UnityEngine;
 using System.Diagnostics;
 using System.Timers;
+using static PedBridge.Utils.PrefabUtils;
 
 namespace PedBridge.Utils {
     public static class NetService {
@@ -30,12 +31,6 @@ namespace PedBridge.Utils {
             Helpers.Log(m);
         }
 
-        public static NetInfo PedestrianBridgeInfo =>
-            _bInfo = _bInfo ?? GetInfo("Pedestrian Elevated");
-
-        public static NetInfo PedestrianPathInfo =>
-            _pInfo = _pInfo ?? GetInfo("Pedestrian Pavement");
-
         public static NetInfo GetInfo(string name) {
             int count = PrefabCollection<NetInfo>.LoadedCount();
             for (uint i = 0; i < count; ++i) {
@@ -47,18 +42,7 @@ namespace PedBridge.Utils {
             throw new Exception("NetInfo not found!");
         }
 
-        public static NetInfo Elevated(this NetInfo info) {
-            NetAI ai = info.m_netAI;
-            if (ai is PedestrianBridgeAI || ai is RoadBridgeAI)
-                return info;
 
-            if (ai is PedestrianPathAI)
-                return (ai as PedestrianPathAI).m_elevatedInfo;
-
-            if (ai is RoadAI)
-                return (ai as RoadAI).m_elevatedInfo;
-            return null;
-        }
 
 
         public class NetServiceException : Exception {
@@ -120,25 +104,30 @@ namespace PedBridge.Utils {
 
         public static void SetGroundNode(ushort nodeID) {
             ref NetNode node = ref nodeID.ToNode();
-            node.m_elevation = 0;
-            node.m_building = 0;
-            node.m_flags &= ~NetNode.Flags.Moveable;
-            node.m_flags |= NetNode.Flags.Transition | NetNode.Flags.OnGround;
+            //node.m_elevation = 0;
+            //node.m_building = 0;
+            //node.m_flags &= ~NetNode.Flags.Moveable;
+            //node.m_flags |= NetNode.Flags.Transition | NetNode.Flags.OnGround;
             node.UpdateNode(nodeID);
             netMan.UpdateNode(nodeID);
         }
 
+        public static Vector3 Get3DPos(this Vector2 point, float elevation) {
+            float terrainH = Singleton<TerrainManager>.instance.SampleFinalHeightSmooth(point.x, point.y);
+            return point.ToPos(terrainH);
+        }
+
         public static ushort CreateL(Vector2 point1, Vector2 pointL, Vector2 point2, float h, NetInfo info){
-            NetInfo eInfo = info.Elevated();
+            //NetInfo eInfo = info.GetElevated();
             float hBridge = 10;
 
-            Vector3 pos1 = point1.ToPos(h + hBridge);
+            Vector3 pos1 = point1.ToPos(h+hBridge);
             Vector3 pos2 = point2.ToPos(h + hBridge);
             Vector3 posL = pointL.ToPos(h + hBridge);
 
-            ushort nodeIDL = CreateNode(posL, eInfo);
-            ushort nodeID1 = CreateNode(pos1, eInfo);
-            ushort nodeID2 = CreateNode(pos2, eInfo);
+            ushort nodeIDL = CreateNode(posL, info);
+            ushort nodeID1 = CreateNode(pos1, info);
+            ushort nodeID2 = CreateNode(pos2, info);
 
             lock (GroundNodes) {
                 //GroundNodes.Queue(nodeID1,50);
@@ -146,6 +135,7 @@ namespace PedBridge.Utils {
             }
             CreateSegment(nodeIDL, nodeID1);
             CreateSegment(nodeIDL, nodeID2);
+            
             return nodeIDL;
         }
 
@@ -169,10 +159,13 @@ namespace PedBridge.Utils {
         public class Threading : ThreadingExtensionBase {
             public override void OnUpdate(float realTimeDelta, float simulationTimeDelta) {
                 lock (GroundNodes) {
-                    foreach(var item in GroundNodes) {
+                    for(int i=0;i< GroundNodes.Count;) {
+                        var item = GroundNodes[i];
                         if (item.IsTime) {
                             SetGroundNode(item.NodeID);
                             GroundNodes.Remove(item);
+                        } else {
+                            i++;
                         }
                     }
                 }
